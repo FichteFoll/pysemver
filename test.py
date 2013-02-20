@@ -1,19 +1,23 @@
+import unittest
+
 from semver import SemVer
 
 SV = SemVer()
 
 
-def test(result, test):
-	message = " - " + test
-	if result:
-		print("PASSED" + message)
-		return True
-	else:
-		print("FAILED" + message)
-		return False
+class TestParseFunctions(unittest.TestCase):
+
+	def setUp(self):
+		pass
+
+	def test_parse(self):
+		pass
 
 
-compare_tests = [
+class TestComparisonFunctions(unittest.TestCase):
+
+	def setUp(self):
+		self.data = [
 				["0.0.0", "0.0.0food"],
 				["0.0.1", "0.0.0"],
 				["1.0.0", "0.9.9"],
@@ -39,68 +43,32 @@ compare_tests = [
 				["1.2.3-5", "1.2.3-4"],
 				["1.2.3-5-foo", "1.2.3-5-Foo"],
 				["3.0.0", "2.7.2+"]
-			]
+				]
 
-i = 0
+	def test_gt(self):
+		pass
 
-results = [
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True,
-			True
-			]
+	def test_lt(self):
+		pass
 
-print("Starting Compare Tests")
+	def test_eq(self):
+		pass
 
-for v in compare_tests:
-	print(str(i) + " '" + v[0] + "' and '" + v[1] + "')")
-	results[i] = results[i] and test(SV.gt(v[0], v[1]), "gt('" + v[0] + "', '" + v[1] + "')")
-	results[i] = results[i] and test(SV.lt(v[1], v[0]), "lt('" + v[1] + "', '" + v[0] + "')")
-	results[i] = results[i] and test(not SV.gt(v[1], v[0]), "!gt('" + v[1] + "', '" + v[0] + "')")
-	results[i] = results[i] and test(not SV.lt(v[0], v[1]), "!lt('" + v[0] + "', '" + v[1] + "')")
-	# results[i] = results[i] and test(SV.eq(v[0], v[0]), "eq('" + v[0] + "', '" + v[0] + "')")
-	# results[i] = results[i] and test(SV.eq(v[1], v[1]), "eq('" + v[1] + "', '" + v[1] + "')")
-	# results[i] = results[i] and test(SV.neq(v[0], v[1]), "neq('" + v[0] + "', '" + v[1] + "')")
-	# results[i] = results[i] and test(SV.cmp(v[1], "==", v[1]), "cmp('" + v[1] + "'' == '" + v[1] + "')")
-	# results[i] = results[i] and test(SV.cmp(v[0], ">=", v[1]), "cmp('" + v[0] + "'' >= '" + v[1] + "')")
-	# results[i] = results[i] and test(SV.cmp(v[1], "<=", v[0]), "cmp('" + v[1] + "'' <= '" + v[0] + "')")
-	# results[i] = results[i] and test(SV.cmp(v[0], "!=", v[1]), "cmp('" + v[1] + "'' != '" + v[1] + "')")
-	i += 1
+	def test_neq(self):
+		pass
 
-testpass = True
-i = 0
-for x in results:
+	def test_cmp(self):
+		pass
 
-	if x:
-		print("Test " + str(i) + " - PASSED")
-	else:
-		print("Test " + str(i) + " - FAILED")
 
-	testpass = testpass and x
-	i += 1
-
-if testpass:
-	print("Test Group: Compare Tests - PASSED")
-else:
-	print("Test Group: Compare Tests - FAILED")
+# SV.gt(v[0], v[1]), "gt('" + v[0] + "', '" + v[1] + "')"
+# SV.lt(v[1], v[0]), "lt('" + v[1] + "', '" + v[0] + "')"
+# not SV.gt(v[1], v[0]), "!gt('" + v[1] + "', '" + v[0] + "')"
+# not SV.lt(v[0], v[1]), "!lt('" + v[0] + "', '" + v[1] + "')"
+# SV.eq(v[0], v[0]), "eq('" + v[0] + "', '" + v[0] + "')"
+# SV.eq(v[1], v[1]), "eq('" + v[1] + "', '" + v[1] + "')"
+# SV.neq(v[0], v[1]), "neq('" + v[0] + "', '" + v[1] + "')"
+# SV.cmp(v[1], "==", v[1]), "cmp('" + v[1] + "'' == '" + v[1] + "')"
+# SV.cmp(v[0], ">=", v[1]), "cmp('" + v[0] + "'' >= '" + v[1] + "')"
+# SV.cmp(v[1], "<=", v[0]), "cmp('" + v[1] + "'' <= '" + v[0] + "')"
+# SV.cmp(v[0], "!=", v[1]), "cmp('" + v[1] + "'' != '" + v[1] + "')"
