@@ -1,11 +1,9 @@
-# import re
-
-
 class SemVer(object):
 	disallowed_chars = "-_ v="
 
 	def parse(self, term):
 		data = []
+		# Should probably check for validity in here, or call a function to check for it.
 		for piece in term.split("."):
 			if piece.isdigit():
 				piece = int(piece)
@@ -28,6 +26,10 @@ class SemVer(object):
 				pass
 			else:
 				return False
+	
+	def lt(self, v1, v2):
+		# Suspect that on a case of being equal this will provide unexpected results.
+		return not self.gt(v1, v2)
 
 	# function stringify (version)
 	# function clean (version)
@@ -70,30 +72,3 @@ class SemVer(object):
 	# parseXRange = re.compile(r"^" + xRange + r"$")
 	# parseSpermy = re.compile(r"^" + exprSpermy + r"$")
 	# parseInts = re.compile(r"\d*")
-
-	# def gt(self, v1, v2):
-	# 	v1 = self.parse.match(v1)
-	# 	v2 = self.parse.match(v2)
-
-	# 	if not v1 or not v2:
-	# 		return False
-	# 	for x in range(1, 5):
-	# 		one = v1.group(x)
-	# 		two = v2.group(x)
-	# 		if one == None and two != None:
-	# 			return True
-	# 		elif one != None and two == None:
-	# 			return False
-	# 		elif one == None and two == None:
-	# 			return False
-	# 		if self.parseInts.match(one):
-	# 			one = int(one)
-	# 		if self.parseInts.match(two):
-	# 			two = int(two)
-	# 		if one > two:
-	# 			return True
-	# 		elif one != two:
-	# 			return False
-
-	# def lt(self, v1, v2):
-	# 	return not self.gt(v1, v2)
