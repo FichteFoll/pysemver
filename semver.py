@@ -2,9 +2,32 @@
 
 
 class SemVer(object):
+	disallowed_chars = "-_ v="
 
-	def function(self):
-		pass
+	def parse(self, term):
+		data = []
+		for piece in term.split("."):
+			if piece.isdigit():
+				piece = int(piece)
+				data.append(piece)
+			else:
+				for each in piece.split("-"):
+					piece.strip(self.disallowed_chars)
+					if piece.isdigit():
+						piece = int(piece)
+					data.append(each)
+		return data
+
+	def gt(self, v1, v2):
+		v1 = self.parse(v1)
+		v2 = self.parse(v2)
+		for x in range(1, max(len(v1), len(v2))):
+			if v1[x] > v2[x]:
+				return True
+			elif v1[x] == v2[x]:
+				pass
+			else:
+				return False
 
 	# function stringify (version)
 	# function clean (version)
