@@ -15,7 +15,7 @@ class SemVer(object):
 						piece = int(piece)
 					data.append(each)
 		return data
-
+ 
 	def gt(self, v1, v2):
 		v1 = self.parse(v1)
 		v2 = self.parse(v2)
@@ -26,7 +26,7 @@ class SemVer(object):
 				pass
 			else:
 				return False
-	
+
 	def lt(self, v1, v2):
 		# Suspect that on a case of being equal this will provide unexpected results.
 		return not self.gt(v1, v2)
