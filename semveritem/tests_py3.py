@@ -10,4 +10,4 @@ class ItemTests(unittest.TestCase):
         self.item2 = SemVerItem
 
     def test_compare_string(self):
-        self.assertRaises(TypeError, lambda:self.item1("0.0.0-beta") > "0.0.0-alpha")
+        self.assertRaises(TypeError, lambda: self.item1("0.0.0-beta") > "0.0.0-alpha")
