@@ -76,35 +76,27 @@ class SemVerItem(object):
             return NotImplemented
 
     def __str__(self):
-        temp_str = self.major + "." + self.minor + "." + self.patch
+        temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
         if self.prerelease != None:
-            temp_str += "-" + self.prerelease
+            temp_str += "-" + str(self.prerelease)
         if self.build != None:
-            temp_str += "+" + self.build
+            temp_str += "+" + str(self.build)
         return temp_str
 
     def __iter__(self):
         if self.initialized == True:
-            return [self.major,
+            result = [self.major,
                     self.minor,
-                    self.patch,
-                    self.prerelease,
-                    self.build]
+                    self.patch]
+            if self.prerelease != None:
+                result.append(self.prerelease)
+            if self.build != None:
+                result.append(self.build)
+            return iter(result)
         else:
             return False
 
     # Utility functions
-
-    def get_array(self):
-        data = [self.major, self.minor, self.patch]
-        if self.prerelease != None:
-            data.append(self.prerelease)
-        if self.build != None:
-            data.append(self.build)
-        return data
-
-    def _set_from_iter(self, items):
-        self.major, self.minor, self.patch, self.prerelease, self.build = items
 
     def parse(self, version):
         match = self.regex.match(version)
@@ -121,11 +113,11 @@ class SemVerItem(object):
         if info['prerelease'] != None:
             self.prerelease = info['prerelease']
         else:
-            self.prerelease = 0
+            self.prerelease = None
         if info['build'] != None:
             self.build = info['build']
         else:
-            self.build = 0
+            self.build = None
         return True
 
     def _compare(self, other):
