@@ -22,7 +22,7 @@ class SemVerItem(object):
         return self.initialized
 
     def __gt__(self, other):
-        if isinstance(other SemVerItem):
+        if isinstance(other, SemVerItem):
             if self._compare(other) == 1:
                 return True
             else:
@@ -31,7 +31,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __lt__(self, other):
-        if isinstance(other SemVerItem):
+        if isinstance(other, SemVerItem):
             if self._compare(other) == -1:
                 return True
             else:
@@ -40,7 +40,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __eq__(self, other):
-        if isinstance(other SemVerItem):
+        if isinstance(other, SemVerItem):
             if self._compare(other) == 0:
                 return True
             else:
@@ -49,13 +49,31 @@ class SemVerItem(object):
             return NotImplemented
 
     def __ge__(self, other):
-        return self == other or self > other
+        if isinstance(other, SemVerItem):
+            if self._compare(other) == 0 and self._compare(other) == 1:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
 
     def __le__(self, other):
-        return self == other or self < other
+        if isinstance(other, SemVerItem):
+            if self._compare(other) == 0 and self._compare(other) == 1:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
 
     def __ne__(self, other):
-        return not self == other
+        if isinstance(other, SemVerItem):
+            if self._compare(other) == 1 or self._compare(other) == -1:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
 
     def __str__(self):
         temp_str = self.major + "." + self.minor + "." + self.patch
