@@ -22,6 +22,3 @@ class ItemTests(unittest.TestCase):
 
     def test_to_string(self):
         self.assertEqual(str(self.item1("0.0.0-beta")), "0.0.0-beta")
-
-if __name__ == '__main__':
-    unittest.main()
