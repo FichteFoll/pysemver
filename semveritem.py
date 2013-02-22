@@ -14,44 +14,48 @@ class SemVerItem(object):
     def __init__(self, version):
         if version == None:
             self.initialized = False
-            raise TypeError("There was no value passed to SemVerItem __init__ "
-                            "method.")
         else:
-            ver_type = type(version)
-            if ver_type == "str":
-                self.parse(version)
-            elif isinstance(version, SemVerItem):
-                self = version
-            elif ver_type == type([0, 0]) or ver_type == type((0, 0)):
-                if len(version) >= 3:
-                    self._set_from_iter(version)
-                else:
-                    raise TypeError
-            else:
-                raise TypeError("Value passed to SemVerItem __init__ method"
-                                "was not a string, list, tuple, or instance")
+            self.parse(version)
             self.initialized = True
 
     def __bool__(self):
         return self.initialized
 
-    def __lt__(self, other):
-        pass
+    def __gt__(self, other):
+        if isinstance(other SemVerItem):
+            if self._compare(other) == 1:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
 
-    def __le__(self, other):
-        pass
+    def __lt__(self, other):
+        if isinstance(other SemVerItem):
+            if self._compare(other) == -1:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
 
     def __eq__(self, other):
-        pass
+        if isinstance(other SemVerItem):
+            if self._compare(other) == 0:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
+
+    def __ge__(self, other):
+        return self == other or self > other
+
+    def __le__(self, other):
+        return self == other or self < other
 
     def __ne__(self, other):
         return not self == other
-
-    def __gt__(self, other):
-        pass
-
-    def __ge__(self, other):
-        pass
 
     def __str__(self):
         temp_str = self.major + "." + self.minor + "." + self.patch
@@ -106,15 +110,10 @@ class SemVerItem(object):
             self.build = 0
         return True
 
-    def _compare_by_keys(self, other):
+    def _compare(self, other):
         for x1, x2 in zip(self, other):
             if x1 > x2:
                 return 1
             elif x1 < x2:
                 return -1
-        if len(x1) > len(x2):
-            return 1
-        elif len(x1) < len(x2):
-            return -1
-        else:
-            return 0
+        return 0
