@@ -98,11 +98,18 @@ class SemVerItem(object):
 
     # Utility functions
 
+    @classmethod
+    def valid(cls, version):
+        if cls.regex.match(version):
+            return True
+        else:
+            return False
+
     def parse(self, version):
         match = self.regex.match(version)
 
         if match is None:
-            raise ValueError('% is not valid SemVer string' % version)
+            raise ValueError('%s is not valid SemVer string' % version)
 
         info = match.groupdict()
 
