@@ -1,13 +1,13 @@
 import re
 
 
-class SemVerItem(object):
+class SemVer(object):
 
     regex = re.compile(r'^(?P<major>[0-9]+)'
-                    r'\.(?P<minor>[0-9]+)'
-                    r'\.(?P<patch>[0-9]+)'
-                    r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
-                    r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?$')
+                       r'\.(?P<minor>[0-9]+)'
+                       r'\.(?P<patch>[0-9]+)'
+                       r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
+                       r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?$')
 
     # Core methods
 
@@ -22,7 +22,7 @@ class SemVerItem(object):
         return self.initialized
 
     def __gt__(self, other):
-        if isinstance(other, SemVerItem):
+        if isinstance(other, SemVer):
             if self._compare(other) == 1:
                 return True
             else:
@@ -31,7 +31,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __lt__(self, other):
-        if isinstance(other, SemVerItem):
+        if isinstance(other, SemVer):
             if self._compare(other) == -1:
                 return True
             else:
@@ -40,7 +40,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __eq__(self, other):
-        if isinstance(other, SemVerItem):
+        if isinstance(other, SemVer):
             if self._compare(other) == 0:
                 return True
             else:
@@ -49,7 +49,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __ge__(self, other):
-        if isinstance(other, SemVerItem):
+        if isinstance(other, SemVer):
             if self._compare(other) == 0 and self._compare(other) == 1:
                 return True
             else:
@@ -58,7 +58,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __le__(self, other):
-        if isinstance(other, SemVerItem):
+        if isinstance(other, SemVer):
             if self._compare(other) == 0 and self._compare(other) == 1:
                 return True
             else:
@@ -67,7 +67,7 @@ class SemVerItem(object):
             return NotImplemented
 
     def __ne__(self, other):
-        if isinstance(other, SemVerItem):
+        if isinstance(other, SemVer):
             if self._compare(other) == 1 or self._compare(other) == -1:
                 return True
             else:
@@ -128,9 +128,22 @@ class SemVerItem(object):
         return True
 
     def _compare(self, other):
+        i = 0
         for x1, x2 in zip(self, other):
-            if x1 > x2:
-                return 1
-            elif x1 < x2:
-                return -1
+            if i > 2:
+                for y1, y2 in zip(x1.split('.'), x2.split('.')):
+                    if y1.isnumeric():
+                        y1 = int(y1)
+                    if y2.isnumeric():
+                        y2 = int(y2)
+                    if y1 > y2:
+                        return 1
+                    elif y1 < y2:
+                        return -1
+            else:
+                if x1 > x2:
+                    return 1
+                elif x1 < x2:
+                    return -1
+            i += 1
         return 0

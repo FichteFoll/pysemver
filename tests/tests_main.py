@@ -1,15 +1,18 @@
 import unittest
-from semveritem import SemVerItem
+from semver import SemVer
 
 
 class CompTests(unittest.TestCase):
 
     def setUp(self):
-        self.item1 = SemVerItem
-        self.item2 = SemVerItem
+        self.item1 = SemVer
+        self.item2 = SemVer
 
     def test_equal(self):
         self.assertEqual(self.item1("0.0.0-alpha"), self.item1("0.0.0-alpha"))
+
+    def test_equal_dot(self):
+        self.assertEqual(self.item1("0.0.0-alpha.12.0"), self.item1("0.0.0-alpha.12.0"))
 
     def test_not_equal(self):
         self.assertNotEqual(self.item1("0.0.0-beta"), self.item1("0.0.0-alpha"))
@@ -27,7 +30,7 @@ class CompTests(unittest.TestCase):
 class InvalidityTests(unittest.TestCase):
 
     def setUp(self):
-        self.item = SemVerItem
+        self.item = SemVer
 
     def test_invalid_order(self):
         self.assertFalse(self.item.valid("0.0.0+a400-alpha"))
@@ -51,7 +54,7 @@ class InvalidityTests(unittest.TestCase):
 class ValidityTests(unittest.TestCase):
 
     def setUp(self):
-        self.item = SemVerItem
+        self.item = SemVer
 
     def test_simple(self):
         self.assertTrue(self.item.valid("0.0.0"))

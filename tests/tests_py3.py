@@ -1,13 +1,13 @@
 # Python 3 specific tests.
 import unittest
-from semveritem import SemVerItem
+from semver import SemVer
 
 
 class ItemTests(unittest.TestCase):
 
     def setUp(self):
-        self.item1 = SemVerItem
-        self.item2 = SemVerItem
+        self.item1 = SemVer
+        self.item2 = SemVer
 
     def test_compare_string(self):
         self.assertRaises(TypeError, lambda: self.item1("0.0.0-beta") > "0.0.0-alpha")
