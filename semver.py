@@ -8,6 +8,9 @@ class SemVer(object):
                        r'\.(?P<patch>[0-9]+)'
                        r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
                        r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?$')
+    bare_sv = r'[0-9]+\.[0-9]+\.[0-9]+' \
+              r'(?:\-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?' \
+              r'(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?'
 
     # Core methods
 
@@ -95,6 +98,9 @@ class SemVer(object):
             return iter(result)
         else:
             return False
+
+    def satisfies(self, comp_range):
+        pass
 
     # Utility functions
 
