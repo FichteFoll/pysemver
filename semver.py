@@ -11,8 +11,7 @@ class SemVer(object):
 
     digit_check = re.compile(r"^\d*$")
 
-    # Core methods
-
+    # Magic methods
     def __init__(self, version):
         if version == None:
             self.initialized = False
@@ -32,15 +31,6 @@ class SemVer(object):
         else:
             return NotImplemented
 
-    def __lt__(self, other):
-        if isinstance(other, SemVer):
-            if self._compare(other) == -1:
-                return True
-            else:
-                return False
-        else:
-            return NotImplemented
-
     def __eq__(self, other):
         if isinstance(other, SemVer):
             if self._compare(other) == 0:
@@ -50,32 +40,17 @@ class SemVer(object):
         else:
             return NotImplemented
 
+    def __lt__(self, other):
+        return not (self > other or self == other)
+
     def __ge__(self, other):
-        if isinstance(other, SemVer):
-            if self._compare(other) in (0, 1):
-                return True
-            else:
-                return False
-        else:
-            return NotImplemented
+        return not (self < other)
 
     def __le__(self, other):
-        if isinstance(other, SemVer):
-            if self._compare(other) in (0, -1):
-                return True
-            else:
-                return False
-        else:
-            return NotImplemented
+        return not (self > other)
 
     def __ne__(self, other):
-        if isinstance(other, SemVer):
-            if self._compare(other) in (1, -1):
-                return True
-            else:
-                return False
-        else:
-            return NotImplemented
+        return not (self == other)
 
     def __str__(self):
         temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
