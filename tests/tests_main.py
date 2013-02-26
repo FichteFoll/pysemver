@@ -18,10 +18,22 @@ class CompTests(unittest.TestCase):
         self.assertNotEqual(self.item1("0.0.0-beta"), self.item1("0.0.0-alpha"))
 
     def test_greater_than(self):
-        self.assertTrue(self.item1("0.0.0-beta") > self.item1("0.0.0-alpha"))
+        self.assertGreater(self.item1("0.0.0-beta"), self.item1("0.0.0-alpha"))
+
+    def test_greater_equal(self):
+        self.assertGreaterEqual(self.item1("0.0.0-beta"), self.item1("0.0.0-alpha"))
+
+    def test_greater_equal_equal(self):
+        self.assertGreaterEqual(self.item1("0.0.0-alpha"), self.item1("0.0.0-alpha"))
 
     def test_less_than(self):
-        self.assertFalse(self.item1("0.0.0-beta") < self.item1("0.0.0-alpha"))
+        self.assertLess(self.item1("0.0.0-alpha"), self.item1("0.0.0-beta"))
+
+    def test_less_equal(self):
+        self.assertLessEqual(self.item1("0.0.0-alpha"), self.item1("0.0.0-beta"))
+
+    def test_less_equal_equal(self):
+        self.assertLessEqual(self.item1("0.0.0-beta"), self.item1("0.0.0-beta"))
 
     def test_to_string(self):
         self.assertEqual(str(self.item1("0.0.0-beta")), "0.0.0-beta")

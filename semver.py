@@ -52,7 +52,7 @@ class SemVer(object):
 
     def __ge__(self, other):
         if isinstance(other, SemVer):
-            if self._compare(other) == 0 and self._compare(other) == 1:
+            if self._compare(other) in (0, 1):
                 return True
             else:
                 return False
@@ -61,7 +61,7 @@ class SemVer(object):
 
     def __le__(self, other):
         if isinstance(other, SemVer):
-            if self._compare(other) == 0 and self._compare(other) == 1:
+            if self._compare(other) in (0, -1):
                 return True
             else:
                 return False
@@ -70,7 +70,7 @@ class SemVer(object):
 
     def __ne__(self, other):
         if isinstance(other, SemVer):
-            if self._compare(other) == 1 or self._compare(other) == -1:
+            if self._compare(other) in (1, -1):
                 return True
             else:
                 return False
