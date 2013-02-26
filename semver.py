@@ -3,7 +3,7 @@ import re
 
 class SemVer(object):
 
-    regex = re.compile(r'^(?P<major>[0-9]+)'
+    regex = re.compile(r'^(=|v)?(?P<major>[0-9]+)'
                        r'\.(?P<minor>[0-9]+)'
                        r'\.(?P<patch>[0-9]+)'
                        r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
