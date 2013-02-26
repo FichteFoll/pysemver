@@ -8,9 +8,8 @@ class SemVer(object):
                        r'\.(?P<patch>[0-9]+)'
                        r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
                        r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?$')
-    bare_sv = r'[0-9]+\.[0-9]+\.[0-9]+' \
-              r'(?:\-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?' \
-              r'(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?'
+
+    digit_check = re.compile(r"^\d*$")
 
     # Core methods
 
@@ -100,7 +99,24 @@ class SemVer(object):
             return False
 
     def satisfies(self, comp_range):
-        pass
+        comp_range = comp_range.replace(" - ", "---")
+        or_ranges = comp_range.split(" || ")  # Split sting into segments joined by OR
+        or_terms = []
+        for x in or_ranges:
+            temp = x.split(' ')
+            and_terms = []
+            for y in temp:
+                and_terms.append(y.split('---'))
+            or_terms.append(and_terms)
+
+        or_term_truth = False
+        for ors in or_terms:
+            and_term_truth = True
+            for ands in ors:
+                and_term_truth = and_term_truth and (self > SemVer(ands[0]) and self < SemVer(ands[1]))
+            or_term_truth = or_term_truth or and_term_truth
+
+        return or_term_truth
 
     # Utility functions
 
@@ -138,9 +154,9 @@ class SemVer(object):
         for x1, x2 in zip(self, other):
             if i > 2:
                 for y1, y2 in zip(x1.split('.'), x2.split('.')):
-                    if y1.isnumeric():
+                    if self.digit_check.match(y1):
                         y1 = int(y1)
-                    if y2.isnumeric():
+                    if self.digit_check.match(y2):
                         y2 = int(y2)
                     if y1 > y2:
                         return 1

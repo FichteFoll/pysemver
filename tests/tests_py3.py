@@ -1,8 +1,10 @@
 # Python 3 specific tests.
+import sys
 import unittest
 from semver import SemVer
 
 
+@unittest.skipUnless(sys.version_info[0] == 3, "Only run these in Python > 3")
 class ItemTests(unittest.TestCase):
 
     def setUp(self):

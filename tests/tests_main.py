@@ -76,3 +76,12 @@ class ValidityTests(unittest.TestCase):
 
     def test_invalid_chars_tilda(self):
         self.assertFalse(self.item.valid("0.0.0+a40-alpha"))
+
+
+class RangeChecks(unittest.TestCase):
+
+    def setUp(self):
+        self.item = SemVer
+
+    def test_simple_range(self):
+        self.assertTrue(self.item("2.0.0").satisfies("1.0.0 - 3.0.0"))
