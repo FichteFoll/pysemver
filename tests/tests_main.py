@@ -55,11 +55,21 @@ class InvalidityTests(unittest.TestCase):
     def test_invalid_chars_tilda(self):
         self.assertFalse(SemVer.valid("0.0.~+a40-alpha"))
 
+    def test_invalid_prefix(self):
+        self.assertFalse(SemVer.valid(" v0.0.0"))
+        self.assertFalse(SemVer.valid("b0.0.0"))
+
 
 class ValidityTests(unittest.TestCase):
 
     def test_simple(self):
         self.assertTrue(SemVer.valid("0.0.0"))
+
+    def test_prefixes(self):
+        self.assertTrue(SemVer.valid("v0.0.0"))
+        self.assertTrue(SemVer.valid("=0.0.0"))
+        self.assertTrue(SemVer.valid("v==0.0.0"))
+        self.assertTrue(SemVer.valid("v==  0.0.0"))
 
     def test_prerelease(self):
         self.assertTrue(SemVer.valid("0.0.0-alpha"))
@@ -70,14 +80,23 @@ class ValidityTests(unittest.TestCase):
     def test_prerelease_build(self):
         self.assertTrue(SemVer.valid("0.0.0-beta+a30b"))
 
-    def test_invalid_chars_comma(self):
-        self.assertFalse(SemVer.valid("0.0.0+a40-alpha"))
 
-    def test_invalid_chars_dash(self):
-        self.assertFalse(SemVer.valid("0.0.0+a40-alpha"))
+class CleanTests(unittest.TestCase):
 
-    def test_invalid_chars_tilda(self):
-        self.assertFalse(SemVer.valid("0.0.0+a40-alpha"))
+    def test_spaces_before(self):
+        self.assertEqual(SemVer.clean("   0.0.0-alpha+a40"), "0.0.0-alpha+a40")
+
+    def test_anything_before(self):
+        self.assertEqual(SemVer.clean("dsadfqh2536rhnj2ah0.0.0-alpha+a40"), "0.0.0-alpha+a40")
+
+    def test_spaces_after(self):
+        self.assertEqual(SemVer.clean("= 0.0.0-alpha+a40    "), "= 0.0.0-alpha+a40")
+
+    def test_anything_after(self):
+        self.assertEqual(SemVer.clean("0.0.0-alpha+a40&/dasdtyh231"), "0.0.0-alpha+a40")
+
+    def test_before_and_after(self):
+        self.assertEqual(SemVer.clean(" 123 asda3245 v0.0.0-alpha+a40&!/(§& 23421 sdfa1"), "v0.0.0-alpha+a40")
 
 
 class RangeChecks(unittest.TestCase):

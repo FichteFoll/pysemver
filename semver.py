@@ -3,11 +3,14 @@ import re
 
 class SemVer(object):
 
-    regex = re.compile(r'^(=|v)?(?P<major>[0-9]+)'
-                       r'\.(?P<minor>[0-9]+)'
-                       r'\.(?P<patch>[0-9]+)'
-                       r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
-                       r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?$')
+    base_regex = (r'([v=]+\s*)?'
+                  r'(?P<major>[0-9]+)'
+                  r'\.(?P<minor>[0-9]+)'
+                  r'\.(?P<patch>[0-9]+)'
+                  r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
+                  r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?')
+    search_regex = re.compile(base_regex)
+    match_regex  = re.compile('^%s$' % base_regex)
 
     digit_check = re.compile(r"^\d*$")
 
@@ -19,9 +22,31 @@ class SemVer(object):
             self.parse(version)
             self.initialized = True
 
+    def __str__(self):
+        temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
+        if self.prerelease != None:
+            temp_str += "-" + str(self.prerelease)
+        if self.build != None:
+            temp_str += "+" + str(self.build)
+        return temp_str
+
+    def __iter__(self):
+        if self.initialized == True:
+            result = [self.major,
+                    self.minor,
+                    self.patch]
+            if self.prerelease != None:
+                result.append(self.prerelease)
+            if self.build != None:
+                result.append(self.build)
+            return iter(result)
+        else:
+            return False
+
     def __bool__(self):
         return self.initialized
 
+    # Magic comparing methods
     def __gt__(self, other):
         if isinstance(other, SemVer):
             if self._compare(other) == 1:
@@ -52,27 +77,7 @@ class SemVer(object):
     def __ne__(self, other):
         return not (self == other)
 
-    def __str__(self):
-        temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
-        if self.prerelease != None:
-            temp_str += "-" + str(self.prerelease)
-        if self.build != None:
-            temp_str += "+" + str(self.build)
-        return temp_str
-
-    def __iter__(self):
-        if self.initialized == True:
-            result = [self.major,
-                    self.minor,
-                    self.patch]
-            if self.prerelease != None:
-                result.append(self.prerelease)
-            if self.build != None:
-                result.append(self.build)
-            return iter(result)
-        else:
-            return False
-
+    # Utility functions
     def satisfies(self, comp_range):
         comp_range = comp_range.replace(" - ", "---")
         or_ranges = comp_range.split(" || ")  # Split sting into segments joined by OR
@@ -93,17 +98,23 @@ class SemVer(object):
 
         return or_term_truth
 
-    # Utility functions
-
     @classmethod
     def valid(cls, version):
-        if cls.regex.match(version):
+        if cls.match_regex.match(version):
             return True
         else:
             return False
 
+    @classmethod
+    def clean(cls, version):
+        m = cls.search_regex.search(version)
+        if m:
+            return version[m.start():m.end()]
+        else:
+            return None
+
     def parse(self, version):
-        match = self.regex.match(version)
+        match = self.match_regex.match(version)
 
         if match is None:
             raise ValueError('%s is not valid SemVer string' % version)
