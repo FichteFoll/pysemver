@@ -17,10 +17,12 @@ class SemVer(object):
     _initialized = False
 
     # Magic methods
-    def __init__(self, version):
+    def __init__(self, version=None, clean=False):
         super(SemVer, self).__init__()
 
         if version is not None:
+            if clean:
+                version = self.__class__.clean(version) or version
             self.parse(version)
 
     def __str__(self):
@@ -115,6 +117,9 @@ class SemVer(object):
             return None
 
     def parse(self, version):
+        if not isinstance(version, str):
+            raise TypeError("%r is not a string" % version)
+
         match = self.match_regex.match(version)
 
         if match is None:

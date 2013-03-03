@@ -59,6 +59,12 @@ class InvalidityTests(unittest.TestCase):
         self.assertFalse(SemVer.valid(" v0.0.0"))
         self.assertFalse(SemVer.valid("b0.0.0"))
 
+    def test_constructor_errors(self):
+        self.assertRaises(ValueError, SemVer, "0.0,0+a40-alpha")
+        self.assertRaises(ValueError, SemVer, "0.0.~+a40-alpha")
+        self.assertRaises(ValueError, SemVer, "  s 0.0.~+a40-alpha", True)
+        self.assertRaises(TypeError, SemVer, 123)
+
 
 class ValidityTests(unittest.TestCase):
 
@@ -80,6 +86,10 @@ class ValidityTests(unittest.TestCase):
     def test_prerelease_build(self):
         self.assertTrue(SemVer.valid("0.0.0-beta+a30b"))
 
+    def test_constructor(self):
+        self.assertTrue(SemVer("0.0.0-a40+alpha"))
+        self.assertTrue(SemVer(" 213s 0.0.0-a40+alpha", True))
+
 
 class CleanTests(unittest.TestCase):
 
@@ -97,6 +107,13 @@ class CleanTests(unittest.TestCase):
 
     def test_before_and_after(self):
         self.assertEqual(SemVer.clean(" 123 asda3245 v0.0.0-alpha+a40&!/(§& 23421 sdfa1"), "v0.0.0-alpha+a40")
+
+
+class CoercionTests(unittest.TestCase):
+
+    def test_invalid(self):
+        self.assertTrue(bool(SemVer("0.0.0-a40+alpha")))
+        self.assertFalse(bool(SemVer()))
 
 
 class RangeChecks(unittest.TestCase):
