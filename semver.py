@@ -3,6 +3,7 @@ import re
 
 class SemVer(object):
 
+    # Static class variables
     base_regex = (r'([v=]+\s*)?'
                   r'(?P<major>[0-9]+)'
                   r'\.(?P<minor>[0-9]+)'
@@ -12,15 +13,15 @@ class SemVer(object):
     search_regex = re.compile(base_regex)
     match_regex  = re.compile('^%s$' % base_regex)
 
-    digit_check = re.compile(r"^\d*$")
+    # Instance variables
+    _initialized = False
 
     # Magic methods
     def __init__(self, version):
-        if version is None:
-            self.initialized = False
-        else:
+        super(SemVer, self).__init__()
+
+        if version is not None:
             self.parse(version)
-            self.initialized = True
 
     def __str__(self):
         temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
@@ -31,7 +32,7 @@ class SemVer(object):
         return temp_str
 
     def __iter__(self):
-        if self.initialized is True:
+        if self._initialized is True:
             result = [self.major,
                     self.minor,
                     self.patch]
@@ -44,7 +45,7 @@ class SemVer(object):
             return False
 
     def __bool__(self):
-        return self.initialized
+        return self._initialized
 
     # Magic comparing methods
     def __gt__(self, other):
@@ -133,6 +134,8 @@ class SemVer(object):
             self.build = info['build']
         else:
             self.build = None
+
+        self._initialized = True
         return True
 
     def _compare(self, other):
@@ -140,9 +143,8 @@ class SemVer(object):
         for x1, x2 in zip(self, other):
             if i > 2:
                 for y1, y2 in zip(x1.split('.'), x2.split('.')):
-                    if self.digit_check.match(y1):
+                    if y1.isdigit() and y2.isdigit():
                         y1 = int(y1)
-                    if self.digit_check.match(y2):
                         y2 = int(y2)
                     if y1 > y2:
                         return 1
