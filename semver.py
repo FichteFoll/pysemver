@@ -16,7 +16,7 @@ class SemVer(object):
 
     # Magic methods
     def __init__(self, version):
-        if version == None:
+        if version is None:
             self.initialized = False
         else:
             self.parse(version)
@@ -24,20 +24,20 @@ class SemVer(object):
 
     def __str__(self):
         temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
-        if self.prerelease != None:
+        if self.prerelease is not None:
             temp_str += "-" + str(self.prerelease)
-        if self.build != None:
+        if self.build is not None:
             temp_str += "+" + str(self.build)
         return temp_str
 
     def __iter__(self):
-        if self.initialized == True:
+        if self.initialized is True:
             result = [self.major,
                     self.minor,
                     self.patch]
-            if self.prerelease != None:
+            if self.prerelease is not None:
                 result.append(self.prerelease)
-            if self.build != None:
+            if self.build is not None:
                 result.append(self.build)
             return iter(result)
         else:
@@ -125,11 +125,11 @@ class SemVer(object):
         self.minor = int(info['minor'])
         self.patch = int(info['patch'])
 
-        if info['prerelease'] != None:
+        if info['prerelease'] is not None:
             self.prerelease = info['prerelease']
         else:
             self.prerelease = None
-        if info['build'] != None:
+        if info['build'] is not None:
             self.build = info['build']
         else:
             self.build = None
