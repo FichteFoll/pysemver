@@ -63,7 +63,7 @@ class InvalidityTests(unittest.TestCase):
         self.assertRaises(ValueError, SemVer, "0.0,0+a40-alpha")
         self.assertRaises(ValueError, SemVer, "0.0.~+a40-alpha")
         self.assertRaises(ValueError, SemVer, "  s 0.0.~+a40-alpha", True)
-        self.assertRaises(TypeError, SemVer, 123)
+        self.assertRaises(TypeError,  SemVer, 123)
 
 
 class ValidityTests(unittest.TestCase):
@@ -89,6 +89,10 @@ class ValidityTests(unittest.TestCase):
     def test_constructor(self):
         self.assertTrue(SemVer("0.0.0-a40+alpha"))
         self.assertTrue(SemVer(" 213s 0.0.0-a40+alpha", True))
+        v = SemVer()
+        self.assertFalse(v)
+        v.parse("0.0.0")
+        self.assertTrue(v)
 
 
 class CleanTests(unittest.TestCase):
