@@ -1,5 +1,10 @@
 import re
 
+try:
+    basestring
+except NameError:  # Python 3.x
+    basestring = str
+
 
 class SemVer(object):
 
@@ -20,7 +25,7 @@ class SemVer(object):
     def __init__(self, version=None, clean=False):
         super(SemVer, self).__init__()
 
-        if version is not None:
+        if version:
             if clean:
                 version = self.__class__.clean(version) or version
             self.parse(version)
@@ -48,6 +53,9 @@ class SemVer(object):
 
     def __bool__(self):
         return self._initialized
+
+    # __bool__ is Py3
+    __nonzero__ = __bool__
 
     # Magic comparing methods
     def __gt__(self, other):
@@ -103,6 +111,9 @@ class SemVer(object):
 
     @classmethod
     def valid(cls, version):
+        if not isinstance(version, basestring):
+            raise TypeError("%r is not a string" % version)
+
         if cls.match_regex.match(version):
             return True
         else:
@@ -117,7 +128,7 @@ class SemVer(object):
             return None
 
     def parse(self, version):
-        if not isinstance(version, str):
+        if not isinstance(version, basestring):
             raise TypeError("%r is not a string" % version)
 
         match = self.match_regex.match(version)
@@ -153,12 +164,12 @@ class SemVer(object):
                         y2 = int(y2)
                     if y1 > y2:
                         return 1
-                    elif y1 < y2:
+                    elif y1 != y2:
                         return -1
             else:
                 if x1 > x2:
                     return 1
-                elif x1 < x2:
+                elif x1 != x2:
                     return -1
             i += 1
         return 0
