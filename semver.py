@@ -1,8 +1,7 @@
 import re
+import sys
 
-try:
-    basestring
-except NameError:  # Python 3.x
+if sys.version_info[0] == 3:
     basestring = str
     cmp = lambda a, b: (a > b) - (a < b)
 
@@ -38,6 +37,9 @@ class SemVer(object):
         if self.build is not None:
             temp_str += "+" + str(self.build)
         return temp_str
+
+    def __repr__(self):
+        return "SemVer(%s)" % str(self)
 
     def __iter__(self):
         if self._initialized is True:
