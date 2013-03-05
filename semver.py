@@ -4,6 +4,7 @@ try:
     basestring
 except NameError:  # Python 3.x
     basestring = str
+    cmp = lambda a, b: (a > b) - (a < b)
 
 
 class SemVer(object):
@@ -155,21 +156,33 @@ class SemVer(object):
         return True
 
     def _compare(self, other):
+        # Because zip truncates to the shortest parameter list
+        # this is required to make the longer list win
+        cp_len = lambda t: cmp(len(t[1]), len(t[0]))
+
         i = 0
-        for x1, x2 in zip(self, other):
+        t1 = [tuple(self), tuple(other)]
+        for x1, x2 in zip(*t1):
             if i > 2:
-                for y1, y2 in zip(x1.split('.'), x2.split('.')):
+                # Use numeric comp or lexicographical order - split by '.' for tag and build
+                t2 = [x1.split('.'), x2.split('.')]
+                for y1, y2 in zip(*t2):
                     if y1.isdigit() and y2.isdigit():
                         y1 = int(y1)
                         y2 = int(y2)
                     if y1 > y2:
                         return 1
-                    elif y1 != y2:
+                    elif y1 < y2:
                         return -1
+                d = cp_len(t2)
+                if d:
+                    return d
             else:
                 if x1 > x2:
                     return 1
-                elif x1 != x2:
+                elif x1 < x2:
                     return -1
             i += 1
-        return 0
+
+        # The "shorter" version is greater
+        return cp_len(t1)

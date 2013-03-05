@@ -15,7 +15,7 @@ class CompTests(unittest.TestCase):
 
     def test_greater_than(self):
         self.assertGreater(SemVer("0.0.1"), SemVer("0.0.0"))
-        # self.assertGreater(SemVer("0.0.1"), SemVer("0.0.1-alpha"))
+        self.assertGreater(SemVer("0.0.1"), SemVer("0.0.1-alpha"))
         self.assertGreater(SemVer("0.0.0-beta"), SemVer("0.0.0-alpha"))
 
     def test_greater_equal(self):
@@ -24,7 +24,7 @@ class CompTests(unittest.TestCase):
 
     def test_less_than(self):
         self.assertLess(SemVer("0.0.0-alpha"), SemVer("0.0.0-beta"))
-        # self.assertLess(SemVer("0.0.0-alpha"), SemVer("0.0.0"))
+        self.assertLess(SemVer("0.0.0-alpha"), SemVer("0.0.0"))
 
     def test_less_equal(self):
         self.assertLessEqual(SemVer("0.0.0-alpha"), SemVer("0.0.0-beta"))
@@ -85,16 +85,12 @@ class ValidityTests(unittest.TestCase):
 
 class CleanTests(unittest.TestCase):
 
-    def test_spaces_before(self):
+    def test_before(self):
         self.assertEqual(SemVer.clean("   0.0.0-alpha+a40"), "0.0.0-alpha+a40")
-
-    def test_anything_before(self):
         self.assertEqual(SemVer.clean("dsadfqh2536rhnj2ah0.0.0-alpha+a40"), "0.0.0-alpha+a40")
 
-    def test_spaces_after(self):
+    def test_after(self):
         self.assertEqual(SemVer.clean("= 0.0.0-alpha+a40    "), "= 0.0.0-alpha+a40")
-
-    def test_anything_after(self):
         self.assertEqual(SemVer.clean("0.0.0-alpha+a40&/dasdtyh231"), "0.0.0-alpha+a40")
 
     def test_before_and_after(self):
