@@ -131,13 +131,15 @@ class SemVer(object):
             return None
 
     def parse(self, version):
+        if self._initialized:
+            raise RuntimeError("SemVer instance has already been initialized with %s" % str(self))
         if not isinstance(version, basestring):
             raise TypeError("%r is not a string" % version)
 
         match = self.match_regex.match(version)
 
         if match is None:
-            raise ValueError('%s is not valid SemVer string' % version)
+            raise ValueError('%s is not a valid SemVer string' % version)
 
         info = match.groupdict()
 

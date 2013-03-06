@@ -85,6 +85,7 @@ class InvalidityTests(unittest.TestCase):
         self.invalid("0.0,0+a40-alpha")
         self.invalid("0.0-0.0+a40-alpha")
         self.invalid("0.0.~+a40-alpha")
+        self.invalid("0.0.~+a40-a&&pha")
 
     def test_invalid_prefix(self):
         self.invalid(" v0.0.0")
@@ -147,10 +148,12 @@ class CoercionTests(unittest.TestCase):
     def test_truthiness(self):
         self.assertTrue(SemVer("0.0.0-a40+alpha"))
         self.assertFalse(SemVer())
+
         v = SemVer()
         self.assertFalse(v)
         v.parse("0.0.0")
         self.assertTrue(v)
+        self.assertRaises(RuntimeError, v.parse, "0.0.1")
 
     @unittest.skipUnless(version_info[0] == 3, "Only run these in Python 3")
     def test_compare_string(self):
