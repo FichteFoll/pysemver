@@ -16,7 +16,7 @@ class SemVer(object):
                   r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
                   r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?')
     search_regex = re.compile(base_regex)
-    match_regex  = re.compile('^%s$' % base_regex)
+    match_regex  = re.compile('^%s$' % base_regex)  # required because of $ anchor
 
     # Instance variables
     _initialized = False
@@ -39,7 +39,7 @@ class SemVer(object):
         return temp_str
 
     def __repr__(self):
-        return "SemVer(%s)" % str(self)
+        return 'SemVer("%s")' % str(self)
 
     def __iter__(self):
         if self._initialized is True:
