@@ -160,7 +160,7 @@ class SemVer(object):
     def _compare(self, other):
         # Because zip truncates to the shortest parameter list
         # this is required to make the longer list win
-        cp_len = lambda t: cmp(len(t[1]), len(t[0]))
+        cp_len = lambda t, i=0: cmp(len(t[i]), len(t[not i]))
 
         i = 0
         t1 = [tuple(self), tuple(other)]
@@ -176,6 +176,7 @@ class SemVer(object):
                         return 1
                     elif y1 < y2:
                         return -1
+                # The "longer" version is greater
                 d = cp_len(t2)
                 if d:
                     return d
@@ -187,4 +188,4 @@ class SemVer(object):
             i += 1
 
         # The "shorter" version is greater
-        return cp_len(t1)
+        return cp_len(t1, 1)

@@ -21,7 +21,7 @@ class CompTests(unittest.TestCase):
         1.0.0
         1.1.2-alpha
         1.1.2-beta+2.2
-        1.1.2-beta+2.10
+        1.1.2-beta+2.2.2
         1.1.2-beta
         1.1.2-gamma
         1.1.2
@@ -80,6 +80,7 @@ class InvalidityTests(unittest.TestCase):
         self.assertRaises(err, SemVer, *args)
 
     def test_invalid_order(self):
+        # Can also be considered as "test_invalid_suffix"
         self.invalid("0.0.0+a400-alpha")
 
     def test_invalid_num_terms(self):
