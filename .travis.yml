@@ -1,0 +1,14 @@
+language: python
+python:
+  # These should cover most "things"
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+
+# Run tests
+script: python test.py
+
+#notifications:
+#  email: false
+#  irc:  # Which channel should I choose, I wonder

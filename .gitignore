@@ -119,6 +119,7 @@ UpgradeLog*.XML
 ## Sublime Text
 ################
 
+*.sublime-project
 *.sublime-workspace
 *.cache
 
