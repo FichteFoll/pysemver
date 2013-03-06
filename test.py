@@ -5,12 +5,6 @@ from random import shuffle
 from semver import SemVer
 
 
-class SemVerTestCase(unittest.TestCase):
-    """A class to derive tests from, defines some shortening methods. WIP
-    """
-    pass
-
-
 class CompTests(unittest.TestCase):
 
     versions = """
