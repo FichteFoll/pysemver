@@ -1,8 +1,12 @@
-import unittest
 from sys import version_info
 from random import shuffle
 
 from semver import SemVer
+
+if version_info[0] < 3 and version_info[1] < 7:
+    import unittest2 as unittest
+else:
+    import unittest
 
 
 class CompTests(unittest.TestCase):
