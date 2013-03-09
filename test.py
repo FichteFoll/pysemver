@@ -169,7 +169,7 @@ class CoercionTests(unittest.TestCase):
 
     @unittest.skipUnless(version_info[0] == 3, "Only run these in Python 3")
     def test_compare_string(self):
-        self.assertRaises(TypeError, lambda: SemVer("0.0.0-beta") > "0.0.0-alpha")
+        self.assertRaises(TypeError, (lambda: SemVer("0.0.0-beta") > "0.0.0-alpha"))
 
     @unittest.skipUnless(version_info[0] == 2, "Only run these in Python 2")
     def test_unicode(self):
@@ -178,6 +178,9 @@ class CoercionTests(unittest.TestCase):
 
     def test_to_string(self):
         self.assertEqual(str(SemVer("0.0.0-beta")), "0.0.0-beta")
+
+    def test_uninitialized(self):
+        self.assertRaises(ValueError, (lambda: SemVer("0.0.0-beta") > SemVer()))
 
 
 class RangeTests(unittest.TestCase):

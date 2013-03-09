@@ -56,19 +56,13 @@ class SemVer(object):
     # Magic comparing methods
     def __gt__(self, other):
         if isinstance(other, SemVer):
-            if self._compare(other) == 1:
-                return True
-            else:
-                return False
+            return self._compare(other) == 1
         else:
             return NotImplemented
 
     def __eq__(self, other):
         if isinstance(other, SemVer):
-            if self._compare(other) == 0:
-                return True
-            else:
-                return False
+            return self._compare(other) == 0
         else:
             return NotImplemented
 
@@ -153,8 +147,10 @@ class SemVer(object):
         return True
 
     def _compare(self, other):
-        # Because zip truncates to the shortest parameter list
-        # this is required to make the longer list win
+        if not self or not other:
+            raise ValueError("One of the operands has not been initialized.")
+
+        # Shorthand lambdas
         cp_len = lambda t, i=0: cmp(len(t[i]), len(t[not i]))
         one_is_not = lambda a, b: (not a and b) or (not b and a)
 
