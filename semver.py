@@ -13,8 +13,8 @@ class SemVer(object):
                   r'(?P<major>[0-9]+)'
                   r'\.(?P<minor>[0-9]+)'
                   r'\.(?P<patch>[0-9]+)'
-                  r'(\-(?P<prerelease>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?'
-                  r'(\+(?P<build>[0-9A-Za-z]+(\.[0-9A-Za-z]+)*))?')
+                  r'(?P<prerelease>\-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?'
+                  r'(?P<build>\+([0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?)?')
     search_regex = re.compile(base_regex)
     match_regex  = re.compile('^%s$' % base_regex)  # required because of $ anchor
 
@@ -31,28 +31,21 @@ class SemVer(object):
             self.parse(version)
 
     def __str__(self):
-        temp_str = str(self.major) + "." + str(self.minor) + "." + str(self.patch)
-        if self.prerelease is not None:
-            temp_str += "-" + str(self.prerelease)
-        if self.build is not None:
-            temp_str += "+" + str(self.build)
-        return temp_str
+        return "{0}.{1}.{2}{3}{4}".format(*list(self))
 
     def __repr__(self):
-        return 'SemVer("%s")' % str(self)
+        return 'SemVer("%s")' % self
 
     def __iter__(self):
-        if self._initialized is True:
-            result = [self.major,
-                    self.minor,
-                    self.patch]
-            if self.prerelease is not None:
-                result.append(self.prerelease)
-            if self.build is not None:
-                result.append(self.build)
-            return iter(result)
-        else:
+        if self._initialized is False:
             return False
+
+        result = [self.major,
+                  self.minor,
+                  self.patch,
+                  self.prerelease or "",
+                  self.build or ""]
+        return iter(result)
 
     def __bool__(self):
         return self._initialized
@@ -163,12 +156,25 @@ class SemVer(object):
         # Because zip truncates to the shortest parameter list
         # this is required to make the longer list win
         cp_len = lambda t, i=0: cmp(len(t[i]), len(t[not i]))
+        one_is_not = lambda a, b: (not a and b) or (not b and a)
 
         i = 0
         t1 = [tuple(self), tuple(other)]
         for x1, x2 in zip(*t1):
             if i > 2:
-                # Use numeric comp or lexicographical order - split by '.' for tag and build
+                # self is greater when other has a prerelease but self doesn't
+                # self is less    when other has a build      but self doesn't
+                if one_is_not(x1, x2):
+                    return 2 * (i - 3.5) * (1 - 2 * bool(x2))
+
+                # Remove leading '-' and '+'
+                x1, x2 = x1[1:], x2[1:]
+
+                # self is less when other's build is only '+'
+                if i == 4 and one_is_not(x1, x2):
+                    return 1 - 2 * (bool(x1))
+
+                # Split by '.' and use numeric comp or lexicographical order
                 t2 = [x1.split('.'), x2.split('.')]
                 for y1, y2 in zip(*t2):
                     if y1.isdigit() and y2.isdigit():
@@ -178,7 +184,8 @@ class SemVer(object):
                         return 1
                     elif y1 < y2:
                         return -1
-                # The "longer" version is greater
+
+                # The "longer" sub-version is greater
                 d = cp_len(t2)
                 if d:
                     return d
@@ -189,5 +196,5 @@ class SemVer(object):
                     return -1
             i += 1
 
-        # The "shorter" version is greater
-        return cp_len(t1, 1)
+        # The versions equal
+        return 0

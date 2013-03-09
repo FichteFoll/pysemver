@@ -3,7 +3,8 @@ from random import shuffle
 
 from semver import SemVer
 
-if version_info[0] < 3 and version_info[1] < 7:
+# Use unittest2 for Python <2.7
+if version_info < (2, 7, 0):
     import unittest2 as unittest
 else:
     import unittest
@@ -17,15 +18,22 @@ class CompTests(unittest.TestCase):
         0.0.0-beta
         0.0.1
         1.0.0
+        1.1.2-
         1.1.2-alpha
-        1.1.2-beta+2.2
-        1.1.2-beta+2.2.2
         1.1.2-beta
+        1.1.2-beta+2.2
+        1.1.2-beta+12.2.2
         1.1.2-gamma
         1.1.2
+        1.1.2+build.2
+        1.1.2+build.10
+        1.1.2+
         2.0.0
         2.0.10
     """.split()
+
+    # Do not limit the list comparison to 600 chars
+    maxDiff = None
 
     def __init__(self, *args, **kwargs):
         super(CompTests, self).__init__(*args, **kwargs)
