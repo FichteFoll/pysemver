@@ -6,6 +6,7 @@ if sys.version_info[0] == 3:
     cmp = lambda a, b: (a > b) - (a < b)
 
 
+# @functools.total_ordering would be nice here but was added in 2.7, __cmp__ is not Py3
 class SemVer(object):
 
     # Static class variables
@@ -18,17 +19,13 @@ class SemVer(object):
     search_regex = re.compile(base_regex)
     match_regex  = re.compile('^%s$' % base_regex)  # required because of $ anchor
 
-    # Instance variables
-    _initialized = False
-
     # Magic methods
-    def __init__(self, version=None, clean=False):
+    def __init__(self, version, clean=False):
         super(SemVer, self).__init__()
 
-        if version:
-            if clean:
-                version = self.__class__.clean(version) or version
-            self.parse(version)
+        if clean:
+            version = self.__class__.clean(version) or version
+        self._parse(version)
 
     def __str__(self):
         return "{0}.{1}.{2}{3}{4}".format(*list(self))
@@ -47,24 +44,15 @@ class SemVer(object):
                   self.build or ""]
         return iter(result)
 
-    def __bool__(self):
-        return self._initialized
-
-    # __bool__ is Py3
-    __nonzero__ = __bool__
+    def __hash__(self):
+        return hash(str(self))
 
     # Magic comparing methods
     def __gt__(self, other):
-        if isinstance(other, SemVer):
-            return self._compare(other) == 1
-        else:
-            return NotImplemented
+        return self._compare(other) == 1 if isinstance(other, SemVer) else NotImplemented
 
     def __eq__(self, other):
-        if isinstance(other, SemVer):
-            return self._compare(other) == 0
-        else:
-            return NotImplemented
+        return self._compare(other) == 0 if isinstance(other, SemVer) else NotImplemented
 
     def __lt__(self, other):
         return not (self > other or self == other)
@@ -117,9 +105,7 @@ class SemVer(object):
         else:
             return None
 
-    def parse(self, version):
-        if self._initialized:
-            raise RuntimeError("SemVer instance has already been initialized with %s" % str(self))
+    def _parse(self, version):
         if not isinstance(version, basestring):
             raise TypeError("%r is not a string" % version)
 
@@ -147,9 +133,6 @@ class SemVer(object):
         return True
 
     def _compare(self, other):
-        if not self or not other:
-            raise ValueError("One of the operands has not been initialized.")
-
         # Shorthand lambdas
         cp_len = lambda t, i=0: cmp(len(t[i]), len(t[not i]))
         one_is_not = lambda a, b: (not a and b) or (not b and a)
@@ -168,7 +151,7 @@ class SemVer(object):
 
                 # self is less when other's build is only '+'
                 if i == 4 and one_is_not(x1, x2):
-                    return 1 - 2 * (bool(x1))
+                    return 1 - 2 * bool(x1)
 
                 # Split by '.' and use numeric comp or lexicographical order
                 t2 = [x1.split('.'), x2.split('.')]
