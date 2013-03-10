@@ -177,6 +177,58 @@ class RangeTests(unittest.TestCase):
 
     def test_simple_range(self):
         self.assertTrue(SemVer("2.0.0").satisfies("1.0.0 - 3.0.0"))
+        self.assertTrue(SemVer("2.1.3").satisfies("2.1.0 - 2.1.3"))
+        self.assertTrue(SemVer("2.1.3").satisfies("2.1.0 - 2.3.0"))
+
+    def test_lt_range(self):
+        self.assertTrue(SemVer("2.1.3").satisfies("<2.2.0"))
+        self.assertTrue(SemVer("2.1.3").satisfies("<2.1.4"))
+        self.assertTrue(SemVer("2.1.3").satisfies("<10.0.0"))
+        self.assertFalse(SemVer("2.1.3").satisfies("<2.1.3"))
+
+    def test_lte_range(self):
+        self.assertTrue(SemVer("2.1.3").satisfies("<=2.1.3"))
+        self.assertTrue(SemVer("2.1.3").satisfies("<=3.0.0"))
+        self.assertFalse(SemVer("2.1.3").satisfies("<=2.1.2"))
+        self.assertFalse(SemVer("2.1.3").satisfies("<=1.0.0"))
+
+    def test_gt_range(self):
+        self.assertTrue(SemVer("2.2.3").satisfies(">2.2.0"))
+        self.assertTrue(SemVer("2.2.0").satisfies(">2.1.4"))
+        self.assertTrue(SemVer("10.0.0").satisfies(">2.1.4"))
+        self.assertFalse(SemVer("2.1.3").satisfies(">2.1.3"))
+        self.assertFalse(SemVer("1.2.2").satisfies(">2.1.3"))
+
+    def test_gte_range(self):
+        self.assertTrue(SemVer("2.1.3").satisfies(">=2.1.3"))
+        self.assertTrue(SemVer("3.0.0").satisfies(">=2.1.3"))
+        self.assertFalse(SemVer("2.1.2").satisfies(">=2.1.3"))
+        self.assertFalse(SemVer("1.0.0").satisfies(">=2.1.3"))
+
+    def test_fuzzy_range(self):
+        self.assertTrue(SemVer("2.1.3").satisfies("~2"))
+        self.assertTrue(SemVer("2.0.0").satisfies("~2"))
+        self.assertTrue(SemVer("2.99.1").satisfies("~2"))
+        self.assertTrue(SemVer("2.1.3").satisfies("~2.1"))
+        self.assertTrue(SemVer("2.1.0").satisfies("~2.1"))
+        self.assertTrue(SemVer("2.1.3").satisfies("~2.1.3"))
+        self.assertTrue(SemVer("2.1.99").satisfies("~2.1.3"))
+
+        self.assertFalse(SemVer("3.0.0").satisfies("~2"))
+        self.assertFalse(SemVer("2.0.1").satisfies("~2.1"))
+        self.assertFalse(SemVer("2.2.0").satisfies("~2.1"))
+        self.assertFalse(SemVer("2.1.2").satisfies("~2.1.3"))
+        self.assertFalse(SemVer("2.2.0").satisfies("~2.1.3"))
+
+    def test_x_range(self):
+        self.assertTrue(SemVer("2.1.3").satisfies("2.1.x"))
+        self.assertTrue(SemVer("2.1.99").satisfies("2.1.x"))
+        self.assertTrue(SemVer("2.0.0").satisfies("2.x"))
+        self.assertTrue(SemVer("2.99.1").satisfies("2.x"))
+
+        self.assertFalse(SemVer("3.0.0").satisfies("2.x"))
+        self.assertFalse(SemVer("2.0.1").satisfies("2.1.x"))
+        self.assertFalse(SemVer("2.2.0").satisfies("2.1.x"))
 
 if __name__ == '__main__':
     unittest.main()

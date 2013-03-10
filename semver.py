@@ -70,22 +70,81 @@ class SemVer(object):
     def satisfies(self, comp_range):
         comp_range = comp_range.replace(" - ", "---")
         or_ranges = comp_range.split(" || ")  # Split sting into segments joined by OR
-        or_terms = []
-        for x in or_ranges:
-            temp = x.split(' ')
-            and_terms = []
-            for y in temp:
-                and_terms.append(y.split('---'))
-            or_terms.append(and_terms)
+        or_comps = []
+        for or_range in or_ranges:
+            and_ranges = or_range.split(' ')
+            and_comps = []
+            for and_range in and_ranges:
+                # The 1.x and 1.2.x styles are equivalent to the more
+                # complex forms ~1 and ~1.2
+                x_regex = '(\d+)(.\d+)?.x'
+                x_match = re.match(x_regex, and_range)
+                if x_match:
+                    and_range = '~' + and_range.replace('.x', '')
 
-        or_term_truth = False
-        for ors in or_terms:
-            and_term_truth = True
-            for ands in ors:
-                and_term_truth = and_term_truth and (self > SemVer(ands[0]) and self < SemVer(ands[1]))
-            or_term_truth = or_term_truth or and_term_truth
+                if and_range.find('---') != -1:
+                    ge_version, le_version = and_range.split('---')
+                    and_comps.append(['__ge__', ge_version])
+                    and_comps.append(['__le__', le_version])
 
-        return or_term_truth
+                elif len(and_range) > 0 and and_range[0] == '~':
+                    version = and_range[1:]
+                    
+                    regex = (r'(?P<major>[0-9]+)'
+                             r'(?P<minor>.[0-9]+)?'
+                             r'(?P<patch>.[0-9]+)?')
+                    match = re.match(regex, version)
+                    ge_info = match.groupdict()
+                    lt_info = {}
+
+                    if not ge_info['minor']:
+                        ge_info['minor'] = '.0'
+
+                        ge_major = int(ge_info['major'])
+                        lt_info['major'] = str(ge_major + 1)
+                        lt_info['minor'] = '.0'
+
+                    else:
+                        lt_info['major'] = ge_info['major']
+                        ge_minor = int(ge_info['minor'].replace('.', ''))
+                        lt_info['minor'] = '.' + str(ge_minor + 1)
+
+                    if not ge_info['patch']:
+                        ge_info['patch'] = '.0'
+                    
+                    lt_info['patch'] = '.0'
+
+                    ge_version = ge_info['major'] + ge_info['minor'] + ge_info['patch']
+                    lt_version = lt_info['major'] + lt_info['minor'] + lt_info['patch']
+                    and_comps.append(['__ge__', ge_version])
+                    and_comps.append(['__lt__', lt_version])
+
+                else:
+                    op_match = re.match('(>=|<=|>|<)(.*)$', and_range)
+                    if not op_match:
+                        raise ValueError('%s is not a valid SemVer range' % comp_range)
+                    
+                    op, version = op_match.groups()
+                    ops = {
+                        '>=': '__ge__',
+                        '<=': '__le__',
+                        '>': '__gt__',
+                        '<': '__lt__'
+                    }
+                    and_comps.append([ops[op], version])
+
+            or_comps.append(and_comps)
+
+        for or_comps in or_comps:
+            and_comp_true = True
+            for ands in or_comps:
+                method = getattr(self, ands[0])
+                version = SemVer(ands[1])
+                and_comp_true = and_comp_true and method(version)
+            if and_comp_true:
+                return True
+
+        return False
 
     @classmethod
     def valid(cls, version):
