@@ -1,6 +1,9 @@
 import re
 import sys
 
+
+__all__ = ['SemVer', 'SemSel', 'SelParseError']
+
 if sys.version_info[0] == 3:
     basestring = str
     cmp = lambda a, b: (a > b) - (a < b)
@@ -10,12 +13,12 @@ if sys.version_info[0] == 3:
 class SemVer(object):
 
     # Static class variables
-    base_regex = (r'([v=]+\s*)?'
-                  r'(?P<major>[0-9]+)'
-                  r'\.(?P<minor>[0-9]+)'
-                  r'\.(?P<patch>[0-9]+)'
-                  r'(?P<prerelease>\-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?'
-                  r'(?P<build>\+([0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?)?')
+    base_regex = r'''(?x)([v=]+)?
+        (?P<major>[0-9]+)
+        \.(?P<minor>[0-9]+)
+        \.(?P<patch>[0-9]+)
+        (?P<prerelease>\-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?
+        (?P<build>\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?'''
     search_regex = re.compile(base_regex)
     match_regex  = re.compile('^%s$' % base_regex)  # required because of $ anchor
 
@@ -66,85 +69,12 @@ class SemVer(object):
     def __ne__(self, other):
         return not (self == other)
 
-    # Utility functions
-    def satisfies(self, comp_range):
-        comp_range = comp_range.replace(" - ", "---")
-        or_ranges = comp_range.split(" || ")  # Split sting into segments joined by OR
-        or_comps = []
-        for or_range in or_ranges:
-            and_ranges = or_range.split(' ')
-            and_comps = []
-            for and_range in and_ranges:
-                # The 1.x and 1.2.x styles are equivalent to the more
-                # complex forms ~1 and ~1.2
-                x_regex = '(\d+)(.\d+)?.x'
-                x_match = re.match(x_regex, and_range)
-                if x_match:
-                    and_range = '~' + and_range.replace('.x', '')
+    # Utility methods
+    def satisfies(self, sel):
+        if not isinstance(sel, SemSel):
+            sel = SemSel(sel)  # just "re-raise" exceptions
 
-                if and_range.find('---') != -1:
-                    ge_version, le_version = and_range.split('---')
-                    and_comps.append(['__ge__', ge_version])
-                    and_comps.append(['__le__', le_version])
-
-                elif len(and_range) > 0 and and_range[0] == '~':
-                    version = and_range[1:]
-                    
-                    regex = (r'(?P<major>[0-9]+)'
-                             r'(?P<minor>.[0-9]+)?'
-                             r'(?P<patch>.[0-9]+)?')
-                    match = re.match(regex, version)
-                    ge_info = match.groupdict()
-                    lt_info = {}
-
-                    if not ge_info['minor']:
-                        ge_info['minor'] = '.0'
-
-                        ge_major = int(ge_info['major'])
-                        lt_info['major'] = str(ge_major + 1)
-                        lt_info['minor'] = '.0'
-
-                    else:
-                        lt_info['major'] = ge_info['major']
-                        ge_minor = int(ge_info['minor'].replace('.', ''))
-                        lt_info['minor'] = '.' + str(ge_minor + 1)
-
-                    if not ge_info['patch']:
-                        ge_info['patch'] = '.0'
-                    
-                    lt_info['patch'] = '.0'
-
-                    ge_version = ge_info['major'] + ge_info['minor'] + ge_info['patch']
-                    lt_version = lt_info['major'] + lt_info['minor'] + lt_info['patch']
-                    and_comps.append(['__ge__', ge_version])
-                    and_comps.append(['__lt__', lt_version])
-
-                else:
-                    op_match = re.match('(>=|<=|>|<)(.*)$', and_range)
-                    if not op_match:
-                        raise ValueError('%s is not a valid SemVer range' % comp_range)
-                    
-                    op, version = op_match.groups()
-                    ops = {
-                        '>=': '__ge__',
-                        '<=': '__le__',
-                        '>': '__gt__',
-                        '<': '__lt__'
-                    }
-                    and_comps.append([ops[op], version])
-
-            or_comps.append(and_comps)
-
-        for or_comps in or_comps:
-            and_comp_true = True
-            for ands in or_comps:
-                method = getattr(self, ands[0])
-                version = SemVer(ands[1])
-                and_comp_true = and_comp_true and method(version)
-            if and_comp_true:
-                return True
-
-        return False
+        return bool(sel.matches(self))
 
     @classmethod
     def valid(cls, version):
@@ -164,6 +94,7 @@ class SemVer(object):
         else:
             return None
 
+    # Private methods
     def _parse(self, version):
         if not isinstance(version, basestring):
             raise TypeError("%r is not a string" % version)
@@ -171,7 +102,7 @@ class SemVer(object):
         match = self.match_regex.match(version)
 
         if match is None:
-            raise ValueError('%s is not a valid SemVer string' % version)
+            raise ValueError("'%s' is not a valid SemVer string" % version)
 
         info = match.groupdict()
 
@@ -236,3 +167,191 @@ class SemVer(object):
 
         # The versions equal
         return 0
+
+
+class SemComperator(object):
+    """SemComperator('<=', SemVer("1.2.3"))
+    """
+    ops = {
+        '>=': '__ge__',
+        '<=': '__le__',
+        '>':  '__gt__',
+        '<':  '__lt__',
+        '=':  '__eq__',
+        '!=': '__ne__'
+    }
+
+    def __init__(self, op, ver):
+        super(SemComperator, self).__init__()
+        self.op  = op or '='
+        self.ver = ver
+
+    def matches(self, ver):
+        # TODO
+        return getattr(ver, self.ops[self.op])(self.ver)
+
+    def __str__(self):
+        return (self.op or "") + str(self.ver)
+
+
+class SemSelAndChunk(list):
+    def matches(self, ver):
+        return all(cp.matches(ver) for cp in self)
+
+    def __str__(self):
+        return ' '.join(map(str, self))
+
+    def add_child(self, op, ver):
+        self.append(SemComperator(op, SemVer(ver)))
+
+
+class SemSelOrChunk(list):
+    def matches(self, ver):
+        return any(ch.matches(ver) for ch in self)
+
+    def __str__(self):
+        return ' || '.join(map(str, self))
+
+    def new_child(self):
+        ch = SemSelAndChunk()
+        self.append(ch)
+        return ch
+
+
+class SelParseError(Exception):
+    pass
+
+
+class SemSel(object):
+    """Short for "Semantic Version Selector" or whatever.
+    """
+    fuzzy_regex = re.compile(r'''(?x)^
+        (?P<op>[<>]=?|!=|~>?=?)?
+        (?:[v=]*(?P<major>\d+)
+         (?:\.(?P<minor>\d+)
+          (?:\.(?P<patch>\d+)
+           (?P<other>[-+][a-zA-Z0-9-+.]*)?
+          )?
+         )?
+        )?$''')
+    xrange_regex = re.compile(r'''(?x)^
+        (?P<op>[<>]=?|!=|~>?=?)?
+        (?:[v=]*(?P<major>\d+|[xX*])
+         (?:\.(?P<minor>\d+|[xX*])
+          (?:\.(?P<patch>\d+|[xX*]))?
+         )?
+        )
+        (?P<other>.*)$''')
+    split_op_regex = re.compile(r'^(?P<op>[<>!]?=|<|>)?(?P<ver>.*)$')
+
+    def __init__(self, sel):
+        super(SemSel, self).__init__()
+
+        self.chunk = SemSelOrChunk()
+        self._parse(sel)
+
+    # Magic methods
+    def __str__(self):
+        return str(self.chunk)
+
+    def __repr__(self):
+        return 'SemSel("%s")' % self.chunk
+
+    def __hash__(self):
+        return hash(str(self))
+
+    # Utility methods
+    def matches(self, *vers):
+        ret = []
+        for v in vers:
+            if self.chunk.matches(v):
+                ret.append(v)
+
+        return ret or False
+
+    # Private methods
+    def _parse(self, sel):
+        """ 1. split by whitespace into tokens
+                a. start new and_chunk on ' || '
+                b. parse " - " ranges
+                c. replace "xX*" ranges with "~" equivalent
+                d. parse "~" ranges
+                e. parse unmatched token as comperator
+                ~. append to current and_chunk
+            2. store in self.chunk
+
+            Raises TypeError, ValueError or SelParseError.
+        """
+        if not isinstance(sel, basestring):
+            raise TypeError("Selector must be a string")
+
+        # Split selector by spaces and crawl the tokens
+        tokens = sel.split()
+        i = -1
+        and_chunk = self.chunk.new_child()
+
+        while i + 1 < len(tokens):
+            i += 1
+            t, tt = (tokens[i],) * 2
+
+            # Replace x ranges with ~ selector
+            m = self.xrange_regex.match(t)
+            m = m and m.groups('')
+            if m and any(x in 'xX*' for x in m[1:4]) and not m[0].startswith('>'):
+                # Remove any ".x" and append "~" if not already present (do not match '>1.0' or '>*')
+                t = m[0] + '.'.join(x for x in m[1:4] if x.isdigit()) + m[4]
+                if not t.startswith('~'):
+                    t = '~' + t
+
+            if t == '||':
+                # Start a new and_chunk, don't care about consecutive ORs
+                and_chunk = self.chunk.new_child()
+
+            elif t == '-':
+                # ' - ' range
+                i += 1
+                t = tokens[i]
+                c = and_chunk[-1]  # If this results in an exception you know you're doing it wrong
+
+                if c.op != '=' or len(tokens) < i + 1:
+                    raise SelParseError("Invalid ' - ' range '%s - %s'" % (c.ver, tt))
+                c.op = ">="
+                and_chunk.add_child('<=', t)
+
+            elif t == '':
+                # Multiple spaces
+                pass
+
+            elif t.startswith('~'):
+                m = self.fuzzy_regex.match(t)
+                if not m:
+                    raise SelParseError("Invalid fuzzy range or XRange '%s'" % tt)
+
+                mm, m = m.groups('')[1:4], m.groupdict('')  # mm: major to patch
+                if m['other']:
+                    raise SelParseError("XRanges do not allow pre-release or build tags")
+
+                the_op = ['>=', '<']
+                # Reverse ops if '~!'
+                if '!' in m['op']:
+                    the_op.reverse()
+                # Minimum requirement
+                and_chunk.add_child(the_op[0], '.'.join(x or '0' for x in mm) + '-')
+
+                if m['major']:
+                    # Increase version before none (or second to last if '~1.2.3')
+                    e = [0, 0, 0]
+                    for j, d in enumerate(mm):
+                        if not d or j == len(mm) - 1:
+                            e[j - 1] = e[j - 1] + 1
+                            break
+                        e[j] = int(d)
+
+                    and_chunk.add_child(the_op[1], '.'.join(str(x) for x in e) + '-')
+
+                # else: just plain '~' or '*', or '~>X', already handled
+
+            else:
+                # A normal comperator
+                m = self.split_op_regex.match(t).groupdict()  # this regex can't fail
+                and_chunk.add_child(**m)
