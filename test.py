@@ -114,9 +114,9 @@ class InvalidityTests(unittest.TestCase):
         self.invalid("0.0.~+a40-a&&pha")
 
     def test_invalid_prefix(self):
-        self.invalid(" v0.0.0")
-        self.invalid("b0.0.0")
-        self.invalid("v==  0.0.0")
+        self.invalid("v0.0.0")
+        self.invalid(" b 20.0.0")
+        self.invalid("=0.0.0")
 
     def test_constructor_errors(self):
         self.raises(ValueError, "0.0,0+a40-alpha")
@@ -133,11 +133,6 @@ class ValidityTests(unittest.TestCase):
 
     def test_simple(self):
         self.valid("0.0.0")
-
-    def test_prefixes(self):
-        self.valid("v0.0.0")
-        self.valid("=0.0.0")
-        self.valid("v==0.0.0")
 
     def test_prerelease(self):
         self.valid("0.0.0-alpha")
@@ -165,11 +160,11 @@ class CleanTests(unittest.TestCase):
         self.clean("dsadfqh2536rhnj2ah0.0.0-alpha+a40", "0.0.0-alpha+a40")
 
     def test_after(self):
-        self.clean("= 0.0.0-alpha+a40    ",       "0.0.0-alpha+a40")
+        self.clean("0.0.0-alpha+a40    ",         "0.0.0-alpha+a40")
         self.clean("0.0.0-alpha+a40&/dasdtyh231", "0.0.0-alpha+a40")
 
     def test_before_and_after(self):
-        self.clean(" 123 asda3245 v0.0.0-alpha+a40&!/(& 23421 sdfa1", "v0.0.0-alpha+a40")
+        self.clean(" 123 asda3245 0.0.0-alpha+a40&!/(& 23421 sdfa1", "0.0.0-alpha+a40")
 
 
 class CoercionTests(unittest.TestCase):
@@ -228,7 +223,7 @@ class SelectorTests(unittest.TestCase):
             2.x, 2.x.x, 2, ~2, ~>2, ~2.x: >=2.0.0- <3.0.0-
             ~1.2, ~1.2.x, ~>1.2, ~>1.2.x: >=1.2.0- <1.3.0-
             ~1.2.3, ~>1.2.3:              >=1.2.3- <1.3.0-
-            ~v1.2.0, ~>1.2.0:             >=1.2.0- <1.3.0-
+            ~1.2.0, ~>1.2.0:             >=1.2.0- <1.3.0-
         '''
         self.str_sel_test(t)
 
@@ -255,7 +250,6 @@ class SelectorTests(unittest.TestCase):
 
     def test_comperators(self):
         t = '''
-             >v0.2.6:       >0.2.6
              <0.2.6:        <0.2.6
             >=0.2.6:       >=0.2.6
             <=0.2.6:       <=0.2.6
@@ -266,7 +260,7 @@ class SelectorTests(unittest.TestCase):
 
     def test_invalids(self):
         t = '''
-            ValueError: >1.0, >=1, !1.1.1
+            ValueError: >1.0, >=1, !1.1.1, >v1.2.3
             ValueError: 1.1.1.1, a.b.c
             ValueError: 1.2.3-4++, 1.2.3++, 1.2.3 - 1.2.3++
             SelParseError: >1.2.3 - 1.2.3

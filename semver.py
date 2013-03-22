@@ -82,7 +82,7 @@ class SemVer(object):
     """
 
     # Static class variables
-    base_regex = r'''(?x)([v=]+)?
+    base_regex = r'''(?x)
         (?P<major>[0-9]+)
         \.(?P<minor>[0-9]+)
         \.(?P<patch>[0-9]+)
@@ -95,8 +95,8 @@ class SemVer(object):
     def __init__(self, ver, clean=False):
         """Constructor examples:
             SemVer("1.0.1")
-            SemVer("this version v1.0.1-pre.1 here", True)
-            SemVer("=0.0.9-pre-alpha+34")
+            SemVer("this version 1.0.1-pre.1 here", True)
+            SemVer("0.0.9-pre-alpha+34")
 
             Parameters:
                 * ver (str)
@@ -510,7 +510,7 @@ class SemSel(object):
     # Private properties
     _fuzzy_regex = re.compile(r'''(?x)^
         (?P<op>[<>]=?|!=|~>?=?)?
-        (?:[v=]*(?P<major>\d+)
+        (?:(?P<major>\d+)
          (?:\.(?P<minor>\d+)
           (?:\.(?P<patch>\d+)
            (?P<other>[-+][a-zA-Z0-9-+.]*)?
@@ -519,7 +519,7 @@ class SemSel(object):
         )?$''')
     _xrange_regex = re.compile(r'''(?x)^
         (?P<op>[<>]=?|!=|~>?=?)?
-        (?:[v=]*(?P<major>\d+|[xX*])
+        (?:(?P<major>\d+|[xX*])
          (?:\.(?P<minor>\d+|[xX*])
           (?:\.(?P<patch>\d+|[xX*]))?
          )?

@@ -18,8 +18,8 @@ Selectors look like: ">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113"
 Example usage:
     >>> SemVer.valid("1.2.3.4")
     False
-    >>> SemVer.clean("this is unimportant text v1.2.3-2 and will be stripped")
-    "v1.2.3-2"
+    >>> SemVer.clean("this is unimportant text 1.2.3-2 and will be stripped")
+    "1.2.3-2"
     >>> SemVer("1.7.12+b.133").satisfies(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113")
     True
     >>> SemSel(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113").matches(SemVer("1.7.12+b.133"))
