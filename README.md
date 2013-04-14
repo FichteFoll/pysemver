@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/FichteFoll/pysemver.png?branch=master)](https://travis-ci.org/FichteFoll/pysemver)
-
 pysemver - Semantic Versioning for Python
 =========================================
+
+[![Build Status](https://travis-ci.org/FichteFoll/pysemver.png?branch=master)](https://travis-ci.org/FichteFoll/pysemver)
 
 The purpose of this python library is to provide a robust implementation of the
 Semantic Versioning methodology. Please review the [Semantic Versioning](http://semver.org)
