@@ -77,14 +77,19 @@ SemVer("4.0.0").satisfies("1.8.0 - 2.0.0 || 3.0.0 - 5.0.0")
 Classes
 =======
 
-* SemVer(object)
-    - Defines methods for semantic versions.
+### SemVer(object)
+    
+Defines methods for semantic versions.
 
-* SemSel(object)
-    - Defines methods for semantic version selectors.
 
-* SelParseError(Exception):
-    - An error among others raised when parsing a semantic version selector failed.
+### SemSel(object)
+
+Defines methods for semantic version selectors.
+
+
+### SelParseError(Exception)
+
+An error among others raised when parsing a semantic version selector failed.
 
 
 Contributing
