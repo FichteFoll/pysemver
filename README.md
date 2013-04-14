@@ -78,13 +78,13 @@ Classes
 =======
 
 * SemVer(object)
-    Defines methods for semantic versions.
+    - Defines methods for semantic versions.
 
 * SemSel(object)
-    Defines methods for semantic version selectors.
+    - Defines methods for semantic version selectors.
 
-* SelParseError(Exception)
-    An error among others raised when parsing a semantic version selector failed.
+* SelParseError(Exception):
+    - An error among others raised when parsing a semantic version selector failed.
 
 
 Contributing
