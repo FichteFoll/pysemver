@@ -5,13 +5,13 @@ pysemver - Semantic Versioning for Python
 
 The purpose of this python library is to provide a robust implementation of the
 Semantic Versioning methodology. Please review the [Semantic Versioning](http://semver.org)
-project page for information about the details about how it works.
+project page for the details of the spec.
 
 
-Usage
-=====
+Basic Usage
+-----------
 
-The most basic usage of this module is basic version comparison as follows.
+The most basic usage of this module is version comparison as follows.
 
 ```python
 SemVer('1.2.3') < SemVer('2.0.0')
@@ -35,70 +35,87 @@ Also, if you are working with dirty strings, you can instantiate the class using
 the `SemVer('Extra text 1.2.3', True)` function call. This runs the passed
 string through the `SemVer.clean()` method before parsing it.
 
-All of this functionality is great, but the most useful application for this
-module is when you use the `SemVer.satisfies()` or `SemSel.matches()` functions.
+Advanced Usage
+--------------
 
-The `satisfies` method is used on a SemVer object. The parameter for the method
-is a string defining a versions that should be tested for. If you wanted to
-build a selector for greater than `1.7.0` it would be `>1.7.0`. For a range of
-versions (between 1.7.0 and 2.0.0) is could be defined as either `1.7.0 - 2.0.0`
-or `>=1.7.0 <=2.0.0`. Spaces (` `) are treated as `AND` joining terms together
+The previous section introduces the basic usage of the module. For more complex
+version checking, such as inside a package manager, the module also provides the
+`SemSel` class and the `SemVer.satisfies()` method for sets of conditions.
+Internally, `SemVer.satisfies()` calls `SemSel.matches()` so the results are
+identical.
 
-```python
-SemVer("1.9.0").satisfies(">1.8.0")
+### Selectors
 
-SemVer("1.9.0").satisfies(">1.8.0 <2.0.0")
-
-SemVer("1.9.0").satisfies("1.8.0 - 2.0.0")
-```
-
-The previous statements can be rewritten as follows.
+The most basic form of selector string is something like `>1.7.0` which will match
+version greater than `1.7.0`, this comparison can be done using either of the
+following syntaxes.
 
 ```python
-SemSel(">1.8.0").matches("1.9.0")
-
-SemSel(">1.8.0 <2.0.0").matches("1.9.0")
-
-SemSel("1.8.0 - 2.0.0").matches("1.9.0")
+SemVer('1.8.0').satisfies('>1.7.0')
+# Which is equivalent to
+SemSel('>1.7.0').matches('1.8.0')
 ```
 
-You can define multiple conditions for evaulation using `||` as `OR` like like
-this `1.8.0 - 2.0.0 || 3.0.0 - 5.0.0`, or written in code like as follows.
+Taking this a step further you can define ranges for testing. Say we wanted to
+check if a version is greater than `3.0.0` but less than `8.0.0`. This can be done
+in two ways, either joining `>3.0.0` and `<8.0.0` with a space (`>3.0.0 <8.0.0`)
+or it can be written as a range (`3.0.0 - 8.0.0`). This test can be written as
+follows.
 
 ```python
-SemSel("1.8.0 - 2.0.0 || 3.0.0 - 5.0.0").matches("1.9.0")
-SemSel("1.8.0 - 2.0.0 || 3.0.0 - 5.0.0").matches("4.0.0")
-
-SemVer("1.9.0").satisfies("1.8.0 - 2.0.0 || 3.0.0 - 5.0.0")
-SemVer("4.0.0").satisfies("1.8.0 - 2.0.0 || 3.0.0 - 5.0.0")
+SemVer('6.0.0').satisfies('>3.0.0 <8.0.0')
+SemSel('>3.0.0 <8.0.0').matches('6.0.0')
+# Which is equivalent to
+SemVer('6.0.0').satisfies('3.0.0 - 8.0.0')
+SemSel('3.0.0 - 8.0.0').matches('6.0.0')
 ```
 
+It is also possible to define multiple acceptable patterns for the version. These
+patterns are joined using ` || ` as a logical `OR` operator. So if any of the
+joined ranges are satisfied, it returns true. For example, if all versions less
+than `5.0.0` are acceptable, and versions greater than `8.0.0` are also
+acceptable, but the versions in between are not the selector can be written as
+follows.
+
+```python
+SemVer('9.0.0').satisfies('<5.0.0 || >8.0.0')
+SemSel('<5.0.0 || >8.0.0').matches('9.0.0')
+```
 
 Classes
-=======
+-------
 
-### SemVer(object)
-    
-Defines methods for semantic versions.
-
-
-### SemSel(object)
-
-Defines methods for semantic version selectors.
-
-
-### SelParseError(Exception)
-
-An error among others raised when parsing a semantic version selector failed.
+* SemVer(object)
+	* Defines methods for semantic versions.
+	* Public Methods
+		* satisfies(String)
+		* clean(String)
+		* valid(String)
+	* Implements
+		* `>`
+		* `>=`
+		* `<`
+		* `<=`
+		* `!=`
+		* `str()`
+* SemSel(object)
+	* Defines methods for semantic version selectors.
+	* Public Methods
+		* matches(String)
+	* Implements
+		* `str()`
+* SelParseError(Exception)
+	* An error among others raised when parsing a semantic version selector failed.
 
 
 Contributing
-============
+------------
 
 We welcome help in making this project better! Please let us know about any bugs
 you run in to, and any ideas about how to make it better. We also are glad to
-look at pull requests, but you must write unittests for your code, and it must
-work in both python 2 and 3.
+look at pull requests, but be sure to add unittests for new or changed behavior
+and that your code passes. Please review the `.travis.yml` file for Python
+version and testing environment information.
 
 License (MIT)
 -------------
