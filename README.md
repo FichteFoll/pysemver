@@ -63,10 +63,8 @@ or it can be written as a range (`3.0.0 - 8.0.0`). This test can be written as
 follows.
 
 ```python
-SemVer('6.0.0').satisfies('>3.0.0 <8.0.0')
 SemSel('>3.0.0 <8.0.0').matches('6.0.0')
 # Which is equivalent to
-SemVer('6.0.0').satisfies('3.0.0 - 8.0.0')
 SemSel('3.0.0 - 8.0.0').matches('6.0.0')
 ```
 
@@ -78,34 +76,51 @@ acceptable, but the versions in between are not the selector can be written as
 follows.
 
 ```python
-SemVer('9.0.0').satisfies('<5.0.0 || >8.0.0')
 SemSel('<5.0.0 || >8.0.0').matches('9.0.0')
 ```
+
+### Fuzzy version selection
+
+In addition to the standard comparison operators `< <= = => > !=` it is also
+possible to use fuzzy version selection like `~1.0.0` or `1.3.x`. This is useful
+for specifying a specific major or minor versions and accepting smaller changes.
+For instance `1.2.x` would evaluate to `1.2.0 - 1.2.999999` while `1.x` would
+be equal to `1.0.0 - 1.999.999`. The behavior of `~` is similar. `~1.1.2`
+evaluates to `1.1.2 - 1.1.999`. 
+
+
+
+
+Please note `999` is just used as a convenient representation for a 'big' number.
+These selectors will match up to any value.
+
+
+
+TODO: Advanced Advanced `~` operator and `x-ranges`
 
 Classes
 -------
 
 * SemVer(object)
 	* Defines methods for semantic versions.
-	* Public Methods
-		* satisfies(String)
-		* clean(String)
-		* valid(String)
-	* Implements
-		* `>`
-		* `>=`
-		* `<`
-		* `<=`
-		* `!=`
-		* `str()`
+	* Immutable and hashable
+	* Public methods
+		* satisfies(str)
+		* clean(str)
+		* valid(str)
+	* Implements rich comparison
 * SemSel(object)
 	* Defines methods for semantic version selectors.
-	* Public Methods
-		* matches(String)
-	* Implements
-		* `str()`
+	* Immutable and hashable
+	* Public methods
+		* matches(str)
 * SelParseError(Exception)
 	* An error among others raised when parsing a semantic version selector failed.
+
+Known Issues
+------------
+
+* `1.0.0` does not match `1.0.0-beta` or any other pre-release version.
 
 
 Contributing
