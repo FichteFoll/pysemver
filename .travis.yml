@@ -1,3 +1,6 @@
+# Please note python versions when working on patches.
+# Also note that we are using the unittest module for testing.
+
 language: python
 python:
   # These should cover most "things"
@@ -11,7 +14,3 @@ install: if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then pip install unittest2; f
 
 # Run tests
 script: python test.py
-
-#notifications:
-#  email: false
-#  irc:  # Which channel should I choose, I wonder
