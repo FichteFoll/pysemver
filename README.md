@@ -53,8 +53,12 @@ following syntaxes.
 ```python
 SemVer('1.8.0').satisfies('>1.7.0')
 # Which is equivalent to
-SemSel('>1.7.0').matches('1.8.0')
+bool(SemSel('>1.7.0').matches('1.8.0'))
 ```
+
+`SemSel.matches()` takes a string, SemVer object, or a mixed list, and then returns a
+list of matching versions. If a boolean value is required, it can easily be cast
+using the `bool()` method.
 
 Taking this a step further you can define ranges for testing. Say we wanted to
 check if a version is greater than `3.0.0` but less than `8.0.0`. This can be done
@@ -88,15 +92,13 @@ For instance `1.2.x` would evaluate to `1.2.0 - 1.2.999999` while `1.x` would
 be equal to `1.0.0 - 1.999.999`. The behavior of `~` is similar. `~1.1.2`
 evaluates to `1.1.2 - 1.1.999`. 
 
-
-
-
 Please note `999` is just used as a convenient representation for a 'big' number.
 These selectors will match up to any value.
 
 
 
 TODO: Advanced Advanced `~` operator and `x-ranges`
+
 
 Classes
 -------
@@ -106,16 +108,21 @@ Classes
 	* Immutable and hashable
 	* Public methods
 		* satisfies(str)
+			* returns bool
 		* clean(str)
+			* returns str
 		* valid(str)
+			* returns bool
 	* Implements rich comparison
 * SemSel(object)
 	* Defines methods for semantic version selectors.
 	* Immutable and hashable
 	* Public methods
 		* matches(str)
+			* returns list of strings
 * SelParseError(Exception)
 	* An error among others raised when parsing a semantic version selector failed.
+
 
 Known Issues
 ------------
