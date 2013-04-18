@@ -190,13 +190,18 @@ class SelectorTests(unittest.TestCase):
             self.assertEqual(str(SemSel(s)), res)
 
     def error(self, err, sels):
+        r = None
         for s in sels:
             try:
                 SemSel(s)
-            except:
+            except err:
                 self.assertRaises(err, SemSel, s)
+            except Exception as e:
+                r = TypeError('SemSel(%r) raised %r instead of %s' % (s, e, err))
             else:
-                print('SemSel("%s") did not raise %s' % (s, err))
+                r = TypeError('SemSel(%r) did not raise %s' % (s, err))
+            if r:
+                raise r
 
     def str_sel_test(self, t):
         for l in t.splitlines():
