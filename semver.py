@@ -114,22 +114,21 @@ class SemVer(object):
     # Constructor
     def __init__(self, ver, clean=False):
         """Constructor examples:
-            SemVer("1.0.1")
-            SemVer("this version 1.0.1-pre.1 here", True)
-            SemVer("0.0.9-pre-alpha+34")
+        SemVer("1.0.1")
+        SemVer("this version 1.0.1-pre.1 here", True)
+        SemVer("0.0.9-pre-alpha+34")
 
-            Parameters:
-                * ver (str)
-                    The string containing the version.
-                * clean = `False` (bool; optional)
-                    If this is `True`, `SemVer.clean(ver)` is called before parsing.
+        Parameters:
+            * ver (str)
+                The string containing the version.
+            * clean = `False` (bool; optional)
+                If this is `True`, `SemVer.clean(ver)` is called before parsing.
 
-            Raises:
-                * TypeError
-                    Invalid parameter type.
-                * ValueError
-                    Invalid semantic version.
-
+        Raises:
+            * TypeError
+                Invalid parameter type.
+            * ValueError
+                Invalid semantic version.
         """
         super(SemVer, self).__init__()
 
@@ -185,10 +184,10 @@ class SemVer(object):
     def satisfies(self, sel):
         """Alias for `bool(sel.matches(self))` or `bool(SemSel(sel).matches(self))`.
 
-            See `SemSel.__init__()` and `SemSel.matches(*vers)` for possible exceptions.
+        See `SemSel.__init__()` and `SemSel.matches(*vers)` for possible exceptions.
 
-            Returns:
-                * bool: `True` if the version matches the passed selector, `False` otherwise.
+        Returns:
+            * bool: `True` if the version matches the passed selector, `False` otherwise.
         """
         if not isinstance(sel, SemSel):
             sel = SemSel(sel)  # just "re-raise" exceptions
@@ -199,16 +198,16 @@ class SemVer(object):
     def valid(cls, ver):
         """Check if `ver` is a valid semantic version. Classmethod.
 
-            Parameters:
-                * ver (str)
-                    The string that should be stripped.
+        Parameters:
+            * ver (str)
+                The string that should be stripped.
 
-            Raises:
-                * TypeError
-                    Invalid parameter type.
+        Raises:
+            * TypeError
+                Invalid parameter type.
 
-            Returns:
-                * bool: `True` if it is valid, `False` otherwise.
+        Returns:
+            * bool: `True` if it is valid, `False` otherwise.
         """
         if not isinstance(ver, basestring):
             raise TypeError("%r is not a string" % ver)
@@ -222,17 +221,17 @@ class SemVer(object):
     def clean(cls, vers):
         """Remove everything before and after a valid version string. Classmethod.
 
-            Parameters:
-                * vers (str)
-                    The string that should be stripped.
+        Parameters:
+            * vers (str)
+                The string that should be stripped.
 
-            Raises:
-                * TypeError
-                    Invalid parameter type.
+        Raises:
+            * TypeError
+                Invalid parameter type.
 
-            Returns:
-                * str:  The stripped version string. Only the first version is matched.
-                * None: No version found in the string.
+        Returns:
+            * str:  The stripped version string. Only the first version is matched.
+            * None: No version found in the string.
         """
         if not isinstance(vers, basestring):
             raise TypeError("%r is not a string" % vers)
@@ -316,10 +315,10 @@ class SemVer(object):
 class SemComperator(object):
     """Holds a SemVer object and a comparing operator and can match these against a given version.
 
-        Constructor: SemComperator('<=', SemVer("1.2.3"))
+    Constructor: SemComperator('<=', SemVer("1.2.3"))
 
-        Methods:
-            * matches(ver)
+    Methods:
+        * matches(ver)
     """
     # Private properties
     _ops = {
@@ -334,21 +333,21 @@ class SemComperator(object):
     # Constructor
     def __init__(self, op, ver):
         """Constructor examples:
-            SemComperator('<=', SemVer("1.2.3"))
-            SemComperator('!=', SemVer("2.3.4"))
+        SemComperator('<=', SemVer("1.2.3"))
+        SemComperator('!=', SemVer("2.3.4"))
 
-            Parameters:
-                * op (str, False, None)
-                    One of [>=, <=, >, <, =, !=, ~] or evaluates to `False` which defaults to '~'.
-                    '~' means a "satisfy" operation where pre-releases and builds are ignored.
-                * ver (SemVer)
-                    Holds the version to compare with.
+        Parameters:
+            * op (str, False, None)
+                One of [>=, <=, >, <, =, !=, ~] or evaluates to `False` which defaults to '~'.
+                '~' means a "satisfy" operation where pre-releases and builds are ignored.
+            * ver (SemVer)
+                Holds the version to compare with.
 
-            Raises:
-                * ValueError
-                    Invalid `op` parameter.
-                * TypeError
-                    Invalid `ver` parameter.
+        Raises:
+            * ValueError
+                Invalid `op` parameter.
+            * TypeError
+                Invalid `ver` parameter.
         """
         super(SemComperator, self).__init__()
 
@@ -373,17 +372,18 @@ class SemComperator(object):
     def matches(self, ver):
         """Match the internal version (constructor) against `ver`.
 
-            Parameters:
-                * ver (SemVer)
+        Parameters:
+            * ver (SemVer)
 
-            Raises:
-                * TypeError
-                    Could not compare `ver` against the version passed in the constructor with the
-                    passed operator.
+        Raises:
+            * TypeError
+                Could not compare `ver` against the version passed in the constructor with the
+                passed operator.
 
-            Returns:
-                * bool: `True` if the version matched the specified operator and internal version,
-                    `False` otherwise.
+        Returns:
+            * bool
+                `True` if the version matched the specified operator and internal version, `False`
+                otherwise.
         """
         if self.op == '~':
             # compare only the first three parts (which are tuples) and directly
@@ -397,12 +397,12 @@ class SemComperator(object):
 class SemSelAndChunk(list):
     """Extends list and defines a few methods used for matching versions.
 
-        New elements should be added by calling `.add_child(op, ver)` which creates a SemComperator
-        instance and adds that to itself.
+    New elements should be added by calling `.add_child(op, ver)` which creates a SemComperator
+    instance and adds that to itself.
 
-        Methods:
-            * matches(ver)
-            * add_child(op, ver)
+    Methods:
+        * matches(ver)
+        * add_child(op, ver)
     """
     # Magic methods
     def __str__(self):
@@ -412,16 +412,16 @@ class SemSelAndChunk(list):
     def matches(self, ver):
         """Match all of the added children against `ver`.
 
-            Parameters:
-                * ver (SemVer)
+        Parameters:
+            * ver (SemVer)
 
-            Raises:
-                * TypeError
-                    Invalid `ver` parameter.
+        Raises:
+            * TypeError
+                Invalid `ver` parameter.
 
-            Returns:
-                * bool: `True` if *all* of the SemComperator children match `ver`, `False`
-                    otherwise.
+        Returns:
+            * bool:
+                `True` if *all* of the SemComperator children match `ver`, `False` otherwise.
         """
         if not isinstance(ver, SemVer):
             raise TypeError("`ver` parameter is not instance of SemVer.")
@@ -430,14 +430,14 @@ class SemSelAndChunk(list):
     def add_child(self, op, ver):
         """Create a SemComperator instance with the given parameters and appends that to self.
 
-            Parameters:
-                * op (str)
-                * ver (SemVer)
-            Both parameters are forwarded to `SemComperator.__init__`, see there for a more detailed
-            description.
+        Parameters:
+            * op (str)
+            * ver (SemVer)
+        Both parameters are forwarded to `SemComperator.__init__`, see there for a more detailed
+        description.
 
-            Raises:
-                Exceptions raised by `SemComperator.__init__`.
+        Raises:
+            Exceptions raised by `SemComperator.__init__`.
         """
         self.append(SemComperator(op, SemVer(ver)))
 
@@ -445,12 +445,12 @@ class SemSelAndChunk(list):
 class SemSelOrChunk(list):
     """Extends list and defines a few methods used for matching versions.
 
-        New elements should be added by calling `.new_child()` which returns a SemSelAndChunk
-        instance.
+    New elements should be added by calling `.new_child()` which returns a SemSelAndChunk
+    instance.
 
-        Methods:
-            * matches(ver)
-            * new_child()
+    Methods:
+        * matches(ver)
+        * new_child()
     """
     # Magic methods
     def __str__(self):
@@ -460,17 +460,17 @@ class SemSelOrChunk(list):
     def matches(self, ver):
         """Match all of the added children against `ver`.
 
-            Parameters:
-                * ver (SemVer)
+        Parameters:
+            * ver (SemVer)
 
-            Raises:
-                * TypeError
-                    Invalid `ver` parameter.
+        Raises:
+            * TypeError
+                Invalid `ver` parameter.
 
-            Returns:
-                * bool
-                    `True` if *any* of the SemSelAndChunk children matches `ver`.
-                    `False` otherwise.
+        Returns:
+            * bool
+                `True` if *any* of the SemSelAndChunk children matches `ver`.
+                `False` otherwise.
         """
         if not isinstance(ver, SemVer):
             raise TypeError("`ver` parameter is not instance of SemVer.")
@@ -479,8 +479,8 @@ class SemSelOrChunk(list):
     def new_child(self):
         """Creates a new SemSelAndChunk instance, appends it to self and returns it.
 
-            Returns:
-                * SemSelAndChunk: An empty instance.
+        Returns:
+            * SemSelAndChunk: An empty instance.
         """
         ch = SemSelAndChunk()
         self.append(ch)
@@ -496,33 +496,33 @@ class SelParseError(Exception):
 class SemSel(object):
     """A Semantic Version Selector, holds a selector and can match it against semantic versions.
 
-        Immutable and hashable.
+    Immutable and hashable.
 
-        When talking about "versions" it refers to a semantic version (SemVer). For information on
-        how versions compare to one another, see SemVer's doc string.
+    When talking about "versions" it refers to a semantic version (SemVer). For information on how
+    versions compare to one another, see SemVer's doc string.
 
-        Examples for **comperators**:
-            "1.0.0"         matches the version 1.0.0 and all its pre-release and build variants
-            "=1.0.0"        matches only the version 1.0.0
-            "!=1.0.0"       matches any version that is not exactly 1.0.0
-            ">1.0.0"        matches versions greater than 1.0.0
-            "<1.0.0"        matches versions smaller than 1.0.0
-            "1.0.0 - 1.0.3" matches versions greater than or equal 1.0.0 thru 1.0.3
-            "~1.0"          matches versions greater than or equal 1.0.0 thru 1.0.9999 (and more)
-            "1.0.x"         same as above
-            "~1.1.2"        matches versions greater than or equal 1.1.2 thru 1.1.9999 (and more)
-            "*", "~"        or "~x" match any version
+    Examples for **comperators**:
+        "1.0.0"         matches the version 1.0.0 and all its pre-release and build variants
+        "=1.0.0"        matches only the version 1.0.0
+        "!=1.0.0"       matches any version that is not exactly 1.0.0
+        ">1.0.0"        matches versions greater than 1.0.0
+        "<1.0.0"        matches versions smaller than 1.0.0
+        "1.0.0 - 1.0.3" matches versions greater than or equal 1.0.0 thru 1.0.3
+        "~1.0"          matches versions greater than or equal 1.0.0 thru 1.0.9999 (and more)
+        "1.0.x"         same as above
+        "~1.1.2"        matches versions greater than or equal 1.1.2 thru 1.1.9999 (and more)
+        "*", "~"        or "~x" match any version
 
-        Multiple comperators can be combined by using ' ' spaces and every comperator must match
-        to make the **and chunk** match a version.
-        Multiple and chunks can be combined to **or chunks** using ' || ' and match if any of the
-        and chunks split by these matches.
+    Multiple comperators can be combined by using ' ' spaces and every comperator must match to make
+    the **and chunk** match a version.
+    Multiple and chunks can be combined to **or chunks** using ' || ' and match if any of the and
+    chunks split by these matches.
 
-        A complete example would look like:
-            ~1 || 0.0.3 || <0.0.2 >0.0.1+b.1337 || 2.0.x || 2.1.0 - 2.1.0+b.12 !=2.1.0+b.9
+    A complete example would look like:
+        ~1 || 0.0.3 || <0.0.2 >0.0.1+b.1337 || 2.0.x || 2.1.0 - 2.1.0+b.12 !=2.1.0+b.9
 
-        Methods:
-            * matches(*vers)
+    Methods:
+        * matches(*vers)
     """
     # Private properties
     _fuzzy_regex = re.compile(r'''(?x)^
@@ -547,21 +547,21 @@ class SemSel(object):
     # Constructor
     def __init__(self, sel):
         """Constructor examples:
-                SemSel(">1.0.0")
-                SemSel("~1.2.9 !=1.2.12")
+            SemSel(">1.0.0")
+            SemSel("~1.2.9 !=1.2.12")
 
-            Parameters:
-                * sel (str)
-                    A version selector string.
+        Parameters:
+            * sel (str)
+                A version selector string.
 
-            Raises:
-                * TypeError
-                    `sel` parameter is not a string.
-                * ValueError
-                    A version in the selector could not be matched as a SemVer.
-                * SemParseError
-                    The version selector's syntax is unparsable, only with ranges (fuzzy, xrange or
-                    explicit range).
+        Raises:
+            * TypeError
+                `sel` parameter is not a string.
+            * ValueError
+                A version in the selector could not be matched as a SemVer.
+            * SemParseError
+                The version selector's syntax is unparsable, only with ranges (fuzzy, xrange or
+                explicit range).
         """
         super(SemSel, self).__init__()
 
@@ -582,21 +582,21 @@ class SemSel(object):
     def matches(self, *vers):
         """Match the selector against a selection of versions.
 
-            Parameters:
-                * *vers (str, SemVer)
-                    Versions can be passed as strings and SemVer objects will be created with them.
-                    May also be a mixed list.
+        Parameters:
+            * *vers (str, SemVer)
+                Versions can be passed as strings and SemVer objects will be created with them.
+                May also be a mixed list.
 
-            Raises:
-                * TypeError
-                    A version is not an instance of str (basestring) or SemVer.
-                * ValueError
-                    A string version could not be parsed as a SemVer.
+        Raises:
+            * TypeError
+                A version is not an instance of str (basestring) or SemVer.
+            * ValueError
+                A string version could not be parsed as a SemVer.
 
-            Returns:
-                * list
-                    A list with all the versions that matched, may be empty. Use `max()` to
-                    determine the highest matching version, or `min()` for the lowest.
+        Returns:
+            * list
+                A list with all the versions that matched, may be empty. Use `max()` to determine
+                the highest matching version, or `min()` for the lowest.
         """
         ret = []
         for v in vers:
@@ -615,16 +615,16 @@ class SemSel(object):
     def _parse(self, sel):
         """Private. Do not touch.
 
-            1. split by whitespace into tokens
-                a. start new and_chunk on ' || '
-                b. parse " - " ranges
-                c. replace "xX*" ranges with "~" equivalent
-                d. parse "~" ranges
-                e. parse unmatched token as comperator
-                ~. append to current and_chunk
-            2. store in self._chunk
+        1. split by whitespace into tokens
+            a. start new and_chunk on ' || '
+            b. parse " - " ranges
+            c. replace "xX*" ranges with "~" equivalent
+            d. parse "~" ranges
+            e. parse unmatched token as comperator
+            ~. append to current and_chunk
+        2. store in self._chunk
 
-            Raises TypeError, ValueError or SelParseError.
+        Raises TypeError, ValueError or SelParseError.
         """
         if not isinstance(sel, basestring):
             raise TypeError("Selector must be a string")
