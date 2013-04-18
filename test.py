@@ -182,14 +182,14 @@ class CoercionTests(unittest.TestCase):
 
 
 class SelectorTests(unittest.TestCase):
-    def selector(self, res, *sels):
+    def selector(self, res, sels):
         for s in sels:
             selstr = str(SemSel(s))
             if not selstr == res:
                 print('SemSel("%s") did not result in "%s"' % (s, res))
             self.assertEqual(str(SemSel(s)), res)
 
-    def error(self, err, *sels):
+    def error(self, err, sels):
         for s in sels:
             try:
                 SemSel(s)
@@ -202,13 +202,13 @@ class SelectorTests(unittest.TestCase):
         for l in t.splitlines():
             if l.strip():
                 k, v = l.split(':')
-                self.selector(v.strip(), *k.strip().split(', '))
+                self.selector(v.strip(), k.strip().split(', '))
 
     def str_err_test(self, t):
         for l in t.splitlines():
             if l.strip():
                 e, v = l.split(':')
-                self.error(eval(e.strip()), *v.strip().split(', '))
+                self.error(eval(e.strip()), v.strip().split(', '))
                 # Yes, eval() is evil but I have no other idea besides importing __builtin__
 
     def test_xrange_and_fuzzy(self):
@@ -264,11 +264,11 @@ class SelectorTests(unittest.TestCase):
         '''
         self.str_err_test(t)
 
-        self.error(TypeError, 123, 1.2, lambda a: 0)
+        self.error(TypeError, (123, 1.2, lambda a: 0))
 
 
 class MatchTests(unittest.TestCase):
-    def matches(self, state, sel, *vers):
+    def matches(self, state, sel, vers):
         func = (self.assertFalse, self.assertTrue)[state]
         for v in vers:
             test = bool(SemSel(sel).matches(SemVer(v)))
@@ -283,9 +283,9 @@ class MatchTests(unittest.TestCase):
                 s, v = l.split(':')
                 vs = v.split('^')
                 if vs[0].strip():
-                    self.matches(state, s.strip(), *vs[0].strip().split(', '))
+                    self.matches(state, s.strip(), vs[0].strip().split(', '))
                 if len(vs) == 2:
-                    self.matches(not state, s.strip(), *vs[1].strip().split(', '))
+                    self.matches(not state, s.strip(), vs[1].strip().split(', '))
 
     def test_lower(self):
         t = '''
