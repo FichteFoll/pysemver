@@ -29,7 +29,6 @@ else:
 
 
 class CompTests(unittest.TestCase):
-
     versions = """
         0.0.0-alpha.2
         0.0.0-alpha.12.0
@@ -96,7 +95,6 @@ class CompTests(unittest.TestCase):
 
 
 class InvalidityTests(unittest.TestCase):
-
     def invalid(self, ver):
         self.assertFalse(SemVer.valid(ver))
 
@@ -122,12 +120,11 @@ class InvalidityTests(unittest.TestCase):
         self.raises(ValueError, "0.0,0+a40-alpha")
         self.raises(ValueError, "0.0.~+a40-alpha")
         self.raises(ValueError, "  s 0.0.~+a40-alpha", True)
-        self.raises(TypeError,  123)
+        self.raises(TypeError, 123)
         self.raises(TypeError, lambda x: x)
 
 
 class ValidityTests(unittest.TestCase):
-
     def valid(self, ver):
         self.assertTrue(SemVer.valid(ver))
 
@@ -151,7 +148,6 @@ class ValidityTests(unittest.TestCase):
 
 
 class CleanTests(unittest.TestCase):
-
     def clean(self, ver1, ver2):
         self.assertEqual(SemVer.clean(ver1), ver2)
 
@@ -168,7 +164,6 @@ class CleanTests(unittest.TestCase):
 
 
 class CoercionTests(unittest.TestCase):
-
     def test_truthiness(self):
         self.assertTrue(SemVer("0.0.1"))
 
@@ -187,7 +182,6 @@ class CoercionTests(unittest.TestCase):
 
 
 class SelectorTests(unittest.TestCase):
-
     def selector(self, res, *sels):
         for s in sels:
             selstr = str(SemSel(s))
@@ -223,7 +217,7 @@ class SelectorTests(unittest.TestCase):
             2.x, 2.x.x, 2, ~2, ~>2, ~2.x: >=2.0.0- <3.0.0-
             ~1.2, ~1.2.x, ~>1.2, ~>1.2.x: >=1.2.0- <1.3.0-
             ~1.2.3, ~>1.2.3:              >=1.2.3- <1.3.0-
-            ~1.2.0, ~>1.2.0:             >=1.2.0- <1.3.0-
+            ~1.2.0, ~>1.2.0:              >=1.2.0- <1.3.0-
         '''
         self.str_sel_test(t)
 
@@ -253,7 +247,9 @@ class SelectorTests(unittest.TestCase):
              <0.2.6:        <0.2.6
             >=0.2.6:       >=0.2.6
             <=0.2.6:       <=0.2.6
-            0.2.6, =0.2.6:  =0.2.6
+            =0.2.6:         =0.2.6
+            0.2.6:          ~0.2.6
+            0.2.6-:         =0.2.6-
             !=0.2.6:       !=0.2.6
         '''
         self.str_sel_test(t)
@@ -272,7 +268,6 @@ class SelectorTests(unittest.TestCase):
 
 
 class MatchTests(unittest.TestCase):
-
     def matches(self, state, sel, *vers):
         func = (self.assertFalse, self.assertTrue)[state]
         for v in vers:
@@ -308,7 +303,9 @@ class MatchTests(unittest.TestCase):
 
     def test_equal(self):  # and unequal
         t = '''
-            2.2.0:        2.2.0                     ^ 2.2.0-2
+            2.2.0:        2.2.0, 2.2.0-2, 2.2.0+23  ^ 2.2.1-
+            =2.2.0:       2.2.0                     ^ 2.2.0-2
+            2.2.0-as:     2.2.0-as                  ^ 2.2.0, 2.2.0-2
             =2.1.0-9+8.7: 2.1.0-9+8.7               ^ 0.0.1
             !=2.2.0:      2.1.0, 2.2.0-pre.3, 2.2.1 ^ 2.2.0
         '''
@@ -345,6 +342,56 @@ class MatchTests(unittest.TestCase):
             *:     0.0.0-, 1.0.0, 12.312321.21-134y+ry2q3as
         '''
         self.str_match_test(t)
+
+
+class GetItemTests(unittest.TestCase):
+    def equals(self, what, to):
+        self.assertEqual(what, to)
+
+    def test_slice(self):
+        s = SemVer("1.2.3-4.5+6")
+        eq = lambda w, t: self.equals(w, t)
+
+        eq(type(s[:]), tuple)
+        eq(s[0:1], (1,))
+        eq(s[0:2], (1, 2))
+        eq(s[0:3], (1, 2, 3))
+        eq(s[:3],  (1, 2, 3))
+        eq(s[0:4], (1, 2, 3, '-4.5'))
+        eq(s[0:5], (1, 2, 3, '-4.5', '+6'))
+        eq(s[3:5], ('-4.5', '+6'))
+
+        eq(SemVer("1.2.3")[3:5], ('', ''))
+
+    def test_index(self):
+        s = SemVer("1.2.3-4.5+6")
+
+        self.equals(s[0], 1)
+        self.equals(s[1], 2)
+        self.equals(s[2], 3)
+        self.equals(s[3], '-4.5')
+        self.equals(s[-2], '-4.5')
+        self.equals(s[4], '+6')
+        self.equals(s['build'], '+6')
+        self.assertRaises(IndexError, lambda: s[6])
+        self.assertRaises(IndexError, lambda: s[-6])
+        self.assertRaises(ValueError, lambda: s['b'])
+
+    def test_len(self):
+        self.equals(len(SemVer("1.2.3-4.5+6")), 5)
+        self.equals(len(SemVer("1.2.3-4.5")), 4)
+        self.equals(len(SemVer("1.2.3+6")), 5)
+        self.equals(len(SemVer("1.2.3")), 3)
+
+    def test_attr(self):
+        s = SemVer("1.2.3-4.5+6")
+
+        self.equals(s.major, 1)
+        self.equals(s.minor, 2)
+        self.equals(s.patch, 3)
+        self.equals(s.prerelease, '-4.5')
+        self.equals(s.build, '+6')
+        self.assertRaises(AttributeError, lambda: s.bb)
 
 if __name__ == '__main__':
     unittest.main()

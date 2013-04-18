@@ -18,7 +18,7 @@ Other classes:
     * SemSelAndChunk(list)
     * SemSelOrChunk(list)
 
-Functions:
+Functions/Variables/Constants:
     none
 
 
@@ -44,6 +44,7 @@ import sys
 
 __all__ = ['SemVer', 'SemSel', 'SelParseError']
 
+
 if sys.version_info[0] == 3:
     basestring = str
     cmp = lambda a, b: (a > b) - (a < b)
@@ -56,29 +57,47 @@ class SemVer(object):
     See http://semver.org/ (2.0.0-rc.1) for the standard mainly used for this implementation, few
     changes have been made.
 
+    Information on this particular class and their instances:
+        - Immutable and hashable.
+        - Always `True` in boolean context.
+        - len() returns an int between 3 and 5; 4 when a pre-release is set and 5 when a build is
+          set. Note: Still returns 5 when build is set but not pre-release.
+        - Parts of the semantic version can be accessed by integer indexing, key (string) indexing,
+          slicing and getting an attribute. Returned slices are tuple. Leading '-' and '+' of
+          optional components are not stripped. Supported keys/attributes:
+          ('major', 'minor', 'patch', 'prerelease', 'build').
+
+          Examples:
+            s = SemVer("1.2.3-4.5+6")
+            s[2] == 3
+            s[:3] == (1, 2, 3)
+            s['build'] == '-4.5'
+            s.major == 1
+
+    Short information on semantic version structure:
+
     Semantic versions consist of:
-        * a major component
-        * a minor component
-        * a patch component
-        * a pre-release component (optional)
-        * a build component (optional)
+        * a major component (numeric)
+        * a minor component (numeric)
+        * a patch component (numeric)
+        * a pre-release component [optional]
+        * a build component [optional]
 
-    Major to patch components are numbers.
-
-    The pre-release component is indicated by a hyphen '-' and followed by alphanumeric sequences
+    The pre-release component is indicated by a hyphen '-' and followed by alphanumeric[1] sequences
     separated by dots '.'. Sequences are compared numerically if applicable (both sequences of two
     versions are numeric) or lexicographically. May also include hyphens. The existence of a
     pre-release component lowers the actual version; the shorter pre-release component is considered
-    lower. An empty pre-release component is considered to be the least version for this
+    lower. An 'empty' pre-release component is considered to be the least version for this
     major-minor-patch combination (e.g. "1.0.0-").
 
     The build component may follow the optional pre-release component and is indicated by a plus '+'
     followed by sequences, just as the pre-release component. Comparing works similarly. However the
     existence of a build component raises the actual version and may also raise a pre-release. An
-    empty pre-release component is considered to be the highest version for this major-minor-patch
-    combination (e.g. "1.2.3+").
+    'empty' build component is considered to be the highest version for this
+    major-minor-patch-prerelease combination (e.g. "1.2.3+").
 
-    (Regexp for a sequence: r'[0-9A-Za-z-]+'.)
+
+    [1]: Regexp for a sequence: r'[0-9A-Za-z-]+'.
     """
 
     # Static class variables
@@ -86,8 +105,9 @@ class SemVer(object):
         (?P<major>[0-9]+)
         \.(?P<minor>[0-9]+)
         \.(?P<patch>[0-9]+)
-        (?P<prerelease>\-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?
-        (?P<build>\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?'''
+        (?P<prerelease>\-(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)?
+        (?P<build>\+(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)?'''
+    attribs = ('major', 'minor', 'patch', 'prerelease', 'build')
     search_regex = re.compile(base_regex)
     match_regex  = re.compile('^%s$' % base_regex)  # required because of $ anchor
 
@@ -124,21 +144,25 @@ class SemVer(object):
     def __repr__(self):
         return 'SemVer("%s")' % self
 
-    def __iter__(self):
-        if self._initialized is False:
-            return False
+    def __getitem__(self, i):
+        if isinstance(i, basestring):
+            if i in self.attribs:
+                return getattr(self, i)
+            else:
+                raise ValueError("Invalid item: '%s'" % i)
 
-        result = [self.major,
-                  self.minor,
-                  self.patch,
-                  self.prerelease or "",
-                  self.build or ""]
-        return iter(result)
+        return self._tuple[i]
+
+    def __iter__(self):
+        return iter(self._tuple)
 
     def __hash__(self):
         return hash(str(self))
 
-    # Magic comparing methods
+    def __len__(self):
+        return 3 + (bool(self.build) and 2 or bool(self.prerelease))
+
+    # Magic rich comparing methods
     def __gt__(self, other):
         return self._compare(other) == 1 if isinstance(other, SemVer) else NotImplemented
 
@@ -195,11 +219,11 @@ class SemVer(object):
             return False
 
     @classmethod
-    def clean(cls, ver):
+    def clean(cls, vers):
         """Remove everything before and after a valid version string. Classmethod.
 
             Parameters:
-                * ver (str)
+                * vers (str)
                     The string that should be stripped.
 
             Raises:
@@ -210,11 +234,11 @@ class SemVer(object):
                 * str:  The stripped version string. Only the first version is matched.
                 * None: No version found in the string.
         """
-        if not isinstance(ver, basestring):
-            raise TypeError("%r is not a string" % ver)
-        m = cls.search_regex.search(ver)
+        if not isinstance(vers, basestring):
+            raise TypeError("%r is not a string" % vers)
+        m = cls.search_regex.search(vers)
         if m:
-            return ver[m.start():m.end()]
+            return vers[m.start():m.end()]
         else:
             return None
 
@@ -230,23 +254,15 @@ class SemVer(object):
         if match is None:
             raise ValueError("'%s' is not a valid SemVer string" % ver)
 
-        info = match.groupdict()
+        g = list(match.groups(''))
+        for i in range(3):
+            g[i] = int(g[i])
 
-        self.major = int(info['major'])
-        self.minor = int(info['minor'])
-        self.patch = int(info['patch'])
+        # TODO: properties
+        for k, v in zip(self.attribs, g):
+            setattr(self, k, v)
 
-        if info['prerelease'] is not None:
-            self.prerelease = info['prerelease']
-        else:
-            self.prerelease = None
-        if info['build'] is not None:
-            self.build = info['build']
-        else:
-            self.build = None
-
-        self._initialized = True
-        return True
+        self._tuple = tuple(g)
 
     def _compare(self, other):
         """Private. Do not touch.
@@ -300,8 +316,6 @@ class SemVer(object):
 class SemComperator(object):
     """Holds a SemVer object and a comparing operator and can match these against a given version.
 
-        Immutable and hashable.
-
         Constructor: SemComperator('<=', SemVer("1.2.3"))
 
         Methods:
@@ -321,11 +335,12 @@ class SemComperator(object):
     def __init__(self, op, ver):
         """Constructor examples:
             SemComperator('<=', SemVer("1.2.3"))
-            SemComperator('=', SemVer("2.3.4"))
+            SemComperator('!=', SemVer("2.3.4"))
 
             Parameters:
                 * op (str, False, None)
-                    One of [>=, <=, >, <, =, !=] or evaluates to `False` which defaults to '='.
+                    One of [>=, <=, >, <, =, !=, ~] or evaluates to `False` which defaults to '~'.
+                    '~' means a "satisfy" operation where pre-releases and builds are ignored.
                 * ver (SemVer)
                     Holds the version to compare with.
 
@@ -337,39 +352,45 @@ class SemComperator(object):
         """
         super(SemComperator, self).__init__()
 
-        if op and op not in self._ops:
+        if op and op != '~' and op not in self._ops:
             raise ValueError("Invalid value for `op` parameter.")
         if not isinstance(ver, SemVer):
             raise TypeError("`ver` parameter is not instance of SemVer.")
 
-        self.op  = op or '='
+        # Default to '~' for versions with no build or pre-release
+        op = op or '~'
+        if op == '~' and not len(ver) == 3:
+            op = '='
+
+        self.op  = op
         self.ver = ver
 
     # Magic methods
     def __str__(self):
         return (self.op or "") + str(self.ver)
 
-    def __hash__(self):
-        return hash(str(self))
-
     # Utility methods
     def matches(self, ver):
-        """Match all of the added children against `ver`.
+        """Match the internal version (constructor) against `ver`.
 
             Parameters:
                 * ver (SemVer)
 
             Raises:
                 * TypeError
-                    Could not compare `ver` against the version passed in the constructor.
+                    Could not compare `ver` against the version passed in the constructor with the
+                    passed operator.
 
             Returns:
-                * bool: `True` if *all* of the SemComperator children matches `ver`, `False`
-                    otherwise.
+                * bool: `True` if the version matched the specified operator and internal version,
+                    `False` otherwise.
         """
+        if self.op == '~':
+            # compare only the first three parts (which are tuples) and directly
+            return self.ver[:3] == ver[:3]
         ret = getattr(ver, self._ops[self.op])(self.ver)
         if ret == NotImplemented:
-            raise TypeError("Unable to compare %r" % ver)
+            raise TypeError("Unable to compare %r with operator '%s'" % (ver, self.op))
         return ret
 
 
@@ -481,8 +502,9 @@ class SemSel(object):
         how versions compare to one another, see SemVer's doc string.
 
         Examples for **comperators**:
-            "1.0.0"         matches the version 1.0.0
-            "!=1.0.0"       matches any version that is not 1.0.0
+            "1.0.0"         matches the version 1.0.0 and all its pre-release and build variants
+            "=1.0.0"        matches only the version 1.0.0
+            "!=1.0.0"       matches any version that is not exactly 1.0.0
             ">1.0.0"        matches versions greater than 1.0.0
             "<1.0.0"        matches versions smaller than 1.0.0
             "1.0.0 - 1.0.3" matches versions greater than or equal 1.0.0 thru 1.0.3
@@ -496,13 +518,8 @@ class SemSel(object):
         Multiple and chunks can be combined to **or chunks** using ' || ' and match if any of the
         and chunks split by these matches.
 
-        Possible issues:
-            * The selector "1.0.0" only matches the version "1.0.0" and neither "1.0.0-pre.1" nor
-              "1.0.0+b.123". Use ranges if you want to match these (e.g. "1.0.0- - 1.0.0+").
-              There may be implemented an alias for matching prereleases and builds of a version.
-
         A complete example would look like:
-            ~1 || 0.0.3 || <0.0.2 >0.0.1 || 2.0.x || 2.1.0 - 2.1.0+b.12
+            ~1 || 0.0.3 || <0.0.2 >0.0.1+b.1337 || 2.0.x || 2.1.0 - 2.1.0+b.12 !=2.1.0+b.9
 
         Methods:
             * matches(*vers)
@@ -619,7 +636,7 @@ class SemSel(object):
 
         while i + 1 < len(tokens):
             i += 1
-            t, tt = (tokens[i],) * 2
+            t = tokens[i]
 
             # Replace x ranges with ~ selector
             m = self._xrange_regex.match(t)
@@ -640,8 +657,8 @@ class SemSel(object):
                 t = tokens[i]
                 c = and_chunk[-1]  # If this results in an exception you know you're doing it wrong
 
-                if c.op != '=' or len(tokens) < i + 1:
-                    raise SelParseError("Invalid ' - ' range '%s - %s'" % (c.ver, tt))
+                if c.op not in ('=', '~') or len(tokens) < i + 1:
+                    raise SelParseError("Invalid ' - ' range '%s - %s'" % (c.ver, tokens[i]))
                 c.op = ">="
                 and_chunk.add_child('<=', t)
 
@@ -652,7 +669,7 @@ class SemSel(object):
             elif t.startswith('~'):
                 m = self._fuzzy_regex.match(t)
                 if not m:
-                    raise SelParseError("Invalid fuzzy range or XRange '%s'" % tt)
+                    raise SelParseError("Invalid fuzzy range or XRange '%s'" % tokens[i])
 
                 mm, m = m.groups('')[1:4], m.groupdict('')  # mm: major to patch
                 if m['other']:
