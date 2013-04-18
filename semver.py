@@ -14,7 +14,7 @@ Exported classes:
         An error among others raised when parsing a semantic version selector failed.
 
 Other classes:
-    * SemComperator(object)
+    * SemComparator(object)
     * SemSelAndChunk(list)
     * SemSelOrChunk(list)
 
@@ -312,10 +312,10 @@ class SemVer(object):
         return 0
 
 
-class SemComperator(object):
+class SemComparator(object):
     """Holds a SemVer object and a comparing operator and can match these against a given version.
 
-    Constructor: SemComperator('<=', SemVer("1.2.3"))
+    Constructor: SemComparator('<=', SemVer("1.2.3"))
 
     Methods:
         * matches(ver)
@@ -333,8 +333,8 @@ class SemComperator(object):
     # Constructor
     def __init__(self, op, ver):
         """Constructor examples:
-        SemComperator('<=', SemVer("1.2.3"))
-        SemComperator('!=', SemVer("2.3.4"))
+        SemComparator('<=', SemVer("1.2.3"))
+        SemComparator('!=', SemVer("2.3.4"))
 
         Parameters:
             * op (str, False, None)
@@ -349,7 +349,7 @@ class SemComperator(object):
             * TypeError
                 Invalid `ver` parameter.
         """
-        super(SemComperator, self).__init__()
+        super(SemComparator, self).__init__()
 
         if op and op != '~' and op not in self._ops:
             raise ValueError("Invalid value for `op` parameter.")
@@ -397,7 +397,7 @@ class SemComperator(object):
 class SemSelAndChunk(list):
     """Extends list and defines a few methods used for matching versions.
 
-    New elements should be added by calling `.add_child(op, ver)` which creates a SemComperator
+    New elements should be added by calling `.add_child(op, ver)` which creates a SemComparator
     instance and adds that to itself.
 
     Methods:
@@ -421,25 +421,25 @@ class SemSelAndChunk(list):
 
         Returns:
             * bool:
-                `True` if *all* of the SemComperator children match `ver`, `False` otherwise.
+                `True` if *all* of the SemComparator children match `ver`, `False` otherwise.
         """
         if not isinstance(ver, SemVer):
             raise TypeError("`ver` parameter is not instance of SemVer.")
         return all(cp.matches(ver) for cp in self)
 
     def add_child(self, op, ver):
-        """Create a SemComperator instance with the given parameters and appends that to self.
+        """Create a SemComparator instance with the given parameters and appends that to self.
 
         Parameters:
             * op (str)
             * ver (SemVer)
-        Both parameters are forwarded to `SemComperator.__init__`, see there for a more detailed
+        Both parameters are forwarded to `SemComparator.__init__`, see there for a more detailed
         description.
 
         Raises:
-            Exceptions raised by `SemComperator.__init__`.
+            Exceptions raised by `SemComparator.__init__`.
         """
-        self.append(SemComperator(op, SemVer(ver)))
+        self.append(SemComparator(op, SemVer(ver)))
 
 
 class SemSelOrChunk(list):
@@ -501,7 +501,7 @@ class SemSel(object):
     When talking about "versions" it refers to a semantic version (SemVer). For information on how
     versions compare to one another, see SemVer's doc string.
 
-    Examples for **comperators**:
+    Examples for **comparators**:
         "1.0.0"         matches the version 1.0.0 and all its pre-release and build variants
         "=1.0.0"        matches only the version 1.0.0
         "!=1.0.0"       matches any version that is not exactly 1.0.0
@@ -513,7 +513,7 @@ class SemSel(object):
         "~1.1.2"        matches versions greater than or equal 1.1.2 thru 1.1.9999 (and more)
         "*", "~"        or "~x" match any version
 
-    Multiple comperators can be combined by using ' ' spaces and every comperator must match to make
+    Multiple comparators can be combined by using ' ' spaces and every comparator must match to make
     the **and chunk** match a version.
     Multiple and chunks can be combined to **or chunks** using ' || ' and match if any of the and
     chunks split by these matches.
@@ -620,7 +620,7 @@ class SemSel(object):
             b. parse " - " ranges
             c. replace "xX*" ranges with "~" equivalent
             d. parse "~" ranges
-            e. parse unmatched token as comperator
+            e. parse unmatched token as comparator
             ~. append to current and_chunk
         2. store in self._chunk
 
@@ -697,6 +697,6 @@ class SemSel(object):
                 # else: just plain '~' or '*', or '~>X', already handled
 
             else:
-                # A normal comperator
+                # A normal comparator
                 m = self._split_op_regex.match(t).groupdict()  # this regex can't fail
                 and_chunk.add_child(**m)

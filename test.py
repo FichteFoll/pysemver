@@ -247,7 +247,7 @@ class SelectorTests(unittest.TestCase):
         '''
         self.str_sel_test(t)
 
-    def test_comperators(self):
+    def test_comparators(self):
         t = '''
              <0.2.6:        <0.2.6
             >=0.2.6:       >=0.2.6
