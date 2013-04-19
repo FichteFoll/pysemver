@@ -180,6 +180,11 @@ class CoercionTests(unittest.TestCase):
     def test_to_string(self):
         self.assertEqual(str(SemVer("0.0.0-beta")), "0.0.0-beta")
 
+    def test_as_dict(self):
+        self.assertEqual(SemVer("0.0.0-beta+alpha")._asdict(),
+                         dict(major=0, minor=0, patch=0,
+                              prerelease='-beta', build='+alpha'))
+
 
 class SelectorTests(unittest.TestCase):
     def selector(self, res, sels):
@@ -197,9 +202,9 @@ class SelectorTests(unittest.TestCase):
             except err:
                 self.assertRaises(err, SemSel, s)
             except Exception as e:
-                r = TypeError('SemSel(%r) raised %r instead of %s' % (s, e, err))
+                r = RuntimeError('SemSel(%r) raised %r instead of %s' % (s, e, err))
             else:
-                r = TypeError('SemSel(%r) did not raise %s' % (s, err))
+                r = RuntimeError('SemSel(%r) did not raise %s' % (s, err))
             if r:
                 raise r
 
@@ -268,10 +273,12 @@ class SelectorTests(unittest.TestCase):
             ValueError: 1.2.3-4++, 1.2.3++, 1.2.3 - 1.2.3++
             SelParseError: >1.2.3 - 1.2.3, 1.2.3 - >1.2.3, ~1 || - 1.2.3, 1.2.3 -
             SelParseError: ~!1.2.0, <0.2., **, 1.2.xx, 1.x.2, 1..2
+            SelParseError: || <=10.0.2+123, !=0.0.0-pre ||, 1.2.3 || || 1.3.4
         '''
         self.str_err_test(t)
 
         self.error(TypeError, (123, 1.2, lambda a: 0))
+        self.error(ValueError, (''))
 
 
 class MatchTests(unittest.TestCase):
@@ -386,10 +393,9 @@ class GetItemTests(unittest.TestCase):
         self.equals(s[3], '-4.5')
         self.equals(s[-2], '-4.5')
         self.equals(s[4], '+6')
-        self.equals(s['build'], '+6')
         self.assertRaises(IndexError, lambda: s[6])
         self.assertRaises(IndexError, lambda: s[-6])
-        self.assertRaises(ValueError, lambda: s['b'])
+        self.assertRaises(TypeError, lambda: s['b'])
 
     def test_len(self):
         self.equals(len(SemVer("1.2.3-4.5+6")), 5)

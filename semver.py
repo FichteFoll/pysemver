@@ -40,6 +40,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import re
 import sys
+from collections import namedtuple  # Python >=2.6
 
 
 __all__ = ['SemVer', 'SemSel', 'SelParseError']
@@ -51,7 +52,7 @@ if sys.version_info[0] == 3:
 
 
 # @functools.total_ordering would be nice here but was added in 2.7, __cmp__ is not Py3
-class SemVer(object):
+class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
     """Semantic Version, consists of 3 to 5 components defining the version's adicity.
 
     See http://semver.org/ (2.0.0-rc.1) for the standard mainly used for this implementation, few
@@ -59,13 +60,14 @@ class SemVer(object):
 
     Information on this particular class and their instances:
         - Immutable and hashable.
+        - Subclasses `collections.namedtuple`.
         - Always `True` in boolean context.
         - len() returns an int between 3 and 5; 4 when a pre-release is set and 5 when a build is
           set. Note: Still returns 5 when build is set but not pre-release.
         - Parts of the semantic version can be accessed by integer indexing, key (string) indexing,
           slicing and getting an attribute. Returned slices are tuple. Leading '-' and '+' of
           optional components are not stripped. Supported keys/attributes:
-          ('major', 'minor', 'patch', 'prerelease', 'build').
+          major, minor, patch, prerelease, build.
 
           Examples:
             s = SemVer("1.2.3-4.5+6")
@@ -101,18 +103,17 @@ class SemVer(object):
     """
 
     # Static class variables
-    base_regex = r'''(?x)
+    _base_regex = r'''(?x)
         (?P<major>[0-9]+)
         \.(?P<minor>[0-9]+)
         \.(?P<patch>[0-9]+)
         (?P<prerelease>\-(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)?
         (?P<build>\+(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)?'''
-    attribs = ('major', 'minor', 'patch', 'prerelease', 'build')
-    search_regex = re.compile(base_regex)
-    match_regex  = re.compile('^%s$' % base_regex)  # required because of $ anchor
+    _search_regex = re.compile(_base_regex)
+    _match_regex  = re.compile('^%s$' % _base_regex)  # required because of $ anchor
 
-    # Constructor
-    def __init__(self, ver, clean=False):
+    # "Constructor"
+    def __new__(cls, ver, clean=False):
         """Constructor examples:
         SemVer("1.0.1")
         SemVer("this version 1.0.1-pre.1 here", True)
@@ -130,11 +131,10 @@ class SemVer(object):
             * ValueError
                 Invalid semantic version.
         """
-        super(SemVer, self).__init__()
-
         if clean:
-            ver = self.__class__.clean(ver) or ver
-        self._parse(ver)
+            ver = cls.clean(ver) or ver
+
+        return super(SemVer, cls).__new__(cls, *cls._parse(ver))
 
     # Magic methods
     def __str__(self):
@@ -142,21 +142,6 @@ class SemVer(object):
 
     def __repr__(self):
         return 'SemVer("%s")' % self
-
-    def __getitem__(self, i):
-        if isinstance(i, basestring):
-            if i in self.attribs:
-                return getattr(self, i)
-            else:
-                raise ValueError("Invalid item: '%s'" % i)
-
-        return self._tuple[i]
-
-    def __iter__(self):
-        return iter(self._tuple)
-
-    def __hash__(self):
-        return hash(str(self))
 
     def __len__(self):
         return 3 + (bool(self.build) and 2 or bool(self.prerelease))
@@ -180,7 +165,7 @@ class SemVer(object):
     def __ne__(self, other):
         return not (self == other)
 
-    # Utility methods
+    # Utility (class-)methods
     def satisfies(self, sel):
         """Alias for `bool(sel.matches(self))` or `bool(SemSel(sel).matches(self))`.
 
@@ -212,7 +197,7 @@ class SemVer(object):
         if not isinstance(ver, basestring):
             raise TypeError("%r is not a string" % ver)
 
-        if cls.match_regex.match(ver):
+        if cls._match_regex.match(ver):
             return True
         else:
             return False
@@ -235,20 +220,21 @@ class SemVer(object):
         """
         if not isinstance(vers, basestring):
             raise TypeError("%r is not a string" % vers)
-        m = cls.search_regex.search(vers)
+        m = cls._search_regex.search(vers)
         if m:
             return vers[m.start():m.end()]
         else:
             return None
 
-    # Private methods
-    def _parse(self, ver):
-        """Private. Do not touch.
+    # Private (class-)methods
+    @classmethod
+    def _parse(cls, ver):
+        """Private. Do not touch. Classmethod.
         """
         if not isinstance(ver, basestring):
             raise TypeError("%r is not a string" % ver)
 
-        match = self.match_regex.match(ver)
+        match = cls._match_regex.match(ver)
 
         if match is None:
             raise ValueError("'%s' is not a valid SemVer string" % ver)
@@ -257,11 +243,7 @@ class SemVer(object):
         for i in range(3):
             g[i] = int(g[i])
 
-        # TODO: properties
-        for k, v in zip(self.attribs, g):
-            setattr(self, k, v)
-
-        self._tuple = tuple(g)
+        return g  # Will be passed as namedtuple(...)(*g)
 
     def _compare(self, other):
         """Private. Do not touch.
@@ -499,10 +481,16 @@ class SelParseError(Exception):
     pass
 
 
-class SemSel(object):
+# Subclass `tuple` because this is a somewhat simple method to make this immutable
+class SemSel(tuple):
     """A Semantic Version Selector, holds a selector and can match it against semantic versions.
 
-    Immutable and hashable.
+    Information on this particular class and their instances:
+        - Immutable but not hashable because the content within might have changed.
+        - Subclasses `tuple` but does not behave like one.
+        - Always `True` in boolean context.
+        - len() returns the number of containing *and chunks* (see below).
+        - Iterable, iterates over containing *and chunks*.
 
     When talking about "versions" it refers to a semantic version (SemVer). For information on how
     versions compare to one another, see SemVer's doc string.
@@ -552,8 +540,8 @@ class SemSel(object):
         (?P<other>.*)$''')
     _split_op_regex = re.compile(r'^(?P<op>=|[<>!]=?)?(?P<ver>.*)$')
 
-    # Constructor
-    def __init__(self, sel):
+    # "Constructor"
+    def __new__(cls, sel):
         """Constructor examples:
             SemSel(">1.0.0")
             SemSel("~1.2.9 !=1.2.12")
@@ -568,13 +556,11 @@ class SemSel(object):
             * ValueError
                 A version in the selector could not be matched as a SemVer.
             * SemParseError
-                The version selector's syntax is unparsable; only with ranges (fuzzy, xrange or
-                explicit range).
+                The version selector's syntax is unparsable; invalid ranges (fuzzy, xrange or
+                explicit range) or invalid '||'
         """
-        super(SemSel, self).__init__()
-
-        self._chunk = SemSelOrChunk()
-        self._parse(sel)
+        chunk = cls._parse(sel)
+        return super(SemSel, cls).__new__(cls, (chunk,))
 
     # Magic methods
     def __str__(self):
@@ -583,8 +569,17 @@ class SemSel(object):
     def __repr__(self):
         return 'SemSel("%s")' % self._chunk
 
-    def __hash__(self):
-        return hash(str(self))
+    def __len__(self):
+        # What would you expect?
+        return len(self._chunk)
+
+    def __iter__(self):
+        return iter(self._chunk)
+
+    # Read-only (private) attributes
+    @property
+    def _chunk(self):
+        return self[0]
 
     # Utility methods
     def matches(self, *vers):
@@ -620,7 +615,8 @@ class SemSel(object):
         return ret
 
     # Private methods
-    def _parse(self, sel):
+    @classmethod
+    def _parse(cls, sel):
         """Private. Do not touch.
 
         1. split by whitespace into tokens
@@ -630,24 +626,27 @@ class SemSel(object):
             d. parse "~" ranges
             e. parse unmatched token as comparator
             ~. append to current and_chunk
-        2. store in self._chunk
+        2. return SemSelOrChunk
 
         Raises TypeError, ValueError or SelParseError.
         """
         if not isinstance(sel, basestring):
             raise TypeError("Selector must be a string")
+        if not sel:
+            raise ValueError("String must not be empty")
 
         # Split selector by spaces and crawl the tokens
         tokens = sel.split()
         i = -1
-        and_chunk = self._chunk.new_child()
+        or_chunk = SemSelOrChunk()
+        and_chunk = or_chunk.new_child()
 
         while i + 1 < len(tokens):
             i += 1
             t = tokens[i]
 
             # Replace x ranges with ~ selector
-            m = self._xrange_regex.match(t)
+            m = cls._xrange_regex.match(t)
             m = m and m.groups('')
             if m and any(not x.isdigit() for x in m[1:4]) and not m[0].startswith('>'):
                 # (do not match '>1.0' or '>*')
@@ -668,9 +667,12 @@ class SemSel(object):
                 if not t.startswith('~'):
                     t = '~' + t
 
+            # switch t:
             if t == '||':
-                # Start a new and_chunk, don't care about consecutive ORs
-                and_chunk = self._chunk.new_child()
+                if i == 0 or tokens[i - 1] == '||' or i + 1 == len(tokens):
+                    raise SelParseError("OR range must not be empty")
+                # Start a new and_chunk
+                and_chunk = or_chunk.new_child()
 
             elif t == '-':
                 # ' - ' range
@@ -685,7 +687,7 @@ class SemSel(object):
 
                 # If there is an op in front of one of the bound versions
                 invalid = (c.op not in ('=', '~')
-                           or self._split_op_regex.match(t).group(1) not in (None, '='))
+                           or cls._split_op_regex.match(t).group(1) not in (None, '='))
                 if invalid:
                     raise SelParseError("Invalid ' - ' range '%s - %s'"
                                         % (tokens[i - 2], tokens[i]))
@@ -698,7 +700,7 @@ class SemSel(object):
                 pass
 
             elif t.startswith('~'):
-                m = self._fuzzy_regex.match(t)
+                m = cls._fuzzy_regex.match(t)
                 if not m:
                     raise SelParseError("Invalid fuzzy range or XRange '%s'" % tokens[i])
 
@@ -707,7 +709,7 @@ class SemSel(object):
                 # Minimum requirement
                 min_ver = ('.'.join(x or '0' for x in mm) + '-'
                            if not m['other']
-                           else self._split_op_regex(t[1:]).group('ver'))
+                           else cls._split_op_regex(t[1:]).group('ver'))
                 and_chunk.add_child('>=', min_ver)
 
                 if m['major']:
@@ -725,5 +727,8 @@ class SemSel(object):
 
             else:
                 # A normal comparator
-                m = self._split_op_regex.match(t).groupdict()  # this regex can't fail
+                m = cls._split_op_regex.match(t).groupdict()  # this regex can't fail
                 and_chunk.add_child(**m)
+
+        # Finally return the or_chunk
+        return or_chunk
