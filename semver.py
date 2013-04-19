@@ -526,7 +526,7 @@ class SemSel(object):
     """
     # Private properties
     _fuzzy_regex = re.compile(r'''(?x)^
-        (?P<op>[<>]=?|!=|~>?=?)?
+        (?P<op>[<>]=?|~>?=?)?
         (?:(?P<major>\d+)
          (?:\.(?P<minor>\d+)
           (?:\.(?P<patch>\d+)
@@ -535,7 +535,7 @@ class SemSel(object):
          )?
         )?$''')
     _xrange_regex = re.compile(r'''(?x)^
-        (?P<op>[<>]=?|!=|~>?=?)?
+        (?P<op>[<>]=?|~>?=?)?
         (?:(?P<major>\d+|[xX*])
          (?:\.(?P<minor>\d+|[xX*])
           (?:\.(?P<patch>\d+|[xX*]))?
@@ -560,7 +560,7 @@ class SemSel(object):
             * ValueError
                 A version in the selector could not be matched as a SemVer.
             * SemParseError
-                The version selector's syntax is unparsable, only with ranges (fuzzy, xrange or
+                The version selector's syntax is unparsable; only with ranges (fuzzy, xrange or
                 explicit range).
         """
         super(SemSel, self).__init__()
@@ -641,9 +641,22 @@ class SemSel(object):
             # Replace x ranges with ~ selector
             m = self._xrange_regex.match(t)
             m = m and m.groups('')
-            if m and any(x in 'xX*' for x in m[1:4]) and not m[0].startswith('>'):
-                # Remove ".x"s and append "~" if not already present (do not match '>1.0' or '>*')
-                t = m[0] + '.'.join(x for x in m[1:4] if x.isdigit()) + m[4]
+            if m and any(not x.isdigit() for x in m[1:4]) and not m[0].startswith('>'):
+                # (do not match '>1.0' or '>*')
+                if m[4]:
+                    raise SelParseError("XRanges do not allow pre-release or build components")
+
+                # Only use digit parts and fail if digit found after non-digit
+                mm, xran = [], False
+                for x in m[1:4]:
+                    if x.isdigit():
+                        if xran:
+                            raise SelParseError("Invalid fuzzy range or XRange '%s'" % tokens[i])
+                        mm.append(x)
+                    else:
+                        xran = True
+                t = m[0] + '.'.join(mm)  # x for x in m[1:4] if x.isdigit())
+                # Append "~" if not already present
                 if not t.startswith('~'):
                     t = '~' + t
 
@@ -654,11 +667,21 @@ class SemSel(object):
             elif t == '-':
                 # ' - ' range
                 i += 1
-                t = tokens[i]
-                c = and_chunk[-1]  # If this results in an exception you know you're doing it wrong
+                invalid = False
+                try:
+                    # If these result in exceptions, you know you're doing it wrong
+                    t = tokens[i]
+                    c = and_chunk[-1]
+                except:
+                    raise SelParseError("Invalid ' - ' range position")
 
-                if c.op not in ('=', '~') or len(tokens) < i + 1:
-                    raise SelParseError("Invalid ' - ' range '%s - %s'" % (c.ver, tokens[i]))
+                # If there is an op in front of one of the bound versions
+                invalid = (c.op not in ('=', '~')
+                           or self._split_op_regex.match(t).group(1) not in (None, '='))
+                if invalid:
+                    raise SelParseError("Invalid ' - ' range '%s - %s'"
+                                        % (tokens[i - 2], tokens[i]))
+
                 c.op = ">="
                 and_chunk.add_child('<=', t)
 
@@ -672,8 +695,6 @@ class SemSel(object):
                     raise SelParseError("Invalid fuzzy range or XRange '%s'" % tokens[i])
 
                 mm, m = m.groups('')[1:4], m.groupdict('')  # mm: major to patch
-                if m['other']:
-                    raise SelParseError("XRanges do not allow pre-release or build tags")
 
                 the_op = ['>=', '<']
                 # Reverse ops if '~!' - this feature has been essentially removed, keeping the code

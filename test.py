@@ -261,11 +261,11 @@ class SelectorTests(unittest.TestCase):
 
     def test_invalids(self):
         t = '''
-            ValueError: >1.0, >=1, !1.1.1, >v1.2.3
-            ValueError: 1.1.1.1, a.b.c
+            ValueError: >1.0, >=1, !1.1.1, >v1.2.3, >*
+            ValueError: 1.1.1.1, a.b.c, !=1.2.x, !=0
             ValueError: 1.2.3-4++, 1.2.3++, 1.2.3 - 1.2.3++
-            SelParseError: >1.2.3 - 1.2.3
-            SelParseError: ~!1.2.0, !=1.2.x, <0.2., !=0, **, 1.2.xx
+            SelParseError: >1.2.3 - 1.2.3, 1.2.3 - >1.2.3, ~1 || - 1.2.3, 1.2.3 -
+            SelParseError: ~!1.2.0, <0.2., **, 1.2.xx, 1.x.2, 1..2
         '''
         self.str_err_test(t)
 
