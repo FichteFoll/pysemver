@@ -511,6 +511,7 @@ class SemSel(object):
         "~1.0"          matches versions greater than or equal 1.0.0 thru 1.0.9999 (and more)
         "1.0.x"         same as above
         "~1.1.2"        matches versions greater than or equal 1.1.2 thru 1.1.9999 (and more)
+        "~1.1.2+any"    matches versions greater than or equal 1.1.2+any thru 1.1.9999 (and more)
         "*", "~"        or "~x" match any version
 
     Multiple comparators can be combined by using ' ' spaces and every comparator must match to make
@@ -696,13 +697,11 @@ class SemSel(object):
 
                 mm, m = m.groups('')[1:4], m.groupdict('')  # mm: major to patch
 
-                the_op = ['>=', '<']
-                # Reverse ops if '~!' - this feature has been essentially removed, keeping the code
-                # for eventual future changes
-                if '!' in m['op']:
-                    the_op.reverse()
                 # Minimum requirement
-                and_chunk.add_child(the_op[0], '.'.join(x or '0' for x in mm) + '-')
+                min_ver = ('.'.join(x or '0' for x in mm) + '-'
+                           if not m['other']
+                           else self._split_op_regex(t[1:]).group('ver'))
+                and_chunk.add_child('>=', min_ver)
 
                 if m['major']:
                     # Increase version before none (or second to last if '~1.2.3')
@@ -713,9 +712,9 @@ class SemSel(object):
                             break
                         e[j] = int(d)
 
-                    and_chunk.add_child(the_op[1], '.'.join(str(x) for x in e) + '-')
+                    and_chunk.add_child('<', '.'.join(str(x) for x in e) + '-')
 
-                # else: just plain '~' or '*', or '~>X', already handled
+                # else: just plain '~' or '*', or '~>X' which are already handled
 
             else:
                 # A normal comparator
