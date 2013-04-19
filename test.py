@@ -256,12 +256,14 @@ class SelectorTests(unittest.TestCase):
             0.2.6:          ~0.2.6
             0.2.6-:         =0.2.6-
             !=0.2.6:       !=0.2.6
+            !0.2.6:         !0.2.6
+            !0.2.6-:       !=0.2.6-
         '''
         self.str_sel_test(t)
 
     def test_invalids(self):
         t = '''
-            ValueError: >1.0, >=1, !1.1.1, >v1.2.3, >*
+            ValueError: >1.0, >=1, >v1.2.3, >*
             ValueError: 1.1.1.1, a.b.c, !=1.2.x, !=0
             ValueError: 1.2.3-4++, 1.2.3++, 1.2.3 - 1.2.3++
             SelParseError: >1.2.3 - 1.2.3, 1.2.3 - >1.2.3, ~1 || - 1.2.3, 1.2.3 -
@@ -308,11 +310,18 @@ class MatchTests(unittest.TestCase):
 
     def test_equal(self):  # and unequal
         t = '''
-            2.2.0:        2.2.0, 2.2.0-2, 2.2.0+23  ^ 2.2.1-
             =2.2.0:       2.2.0                     ^ 2.2.0-2
-            2.2.0-as:     2.2.0-as                  ^ 2.2.0, 2.2.0-2
             =2.1.0-9+8.7: 2.1.0-9+8.7               ^ 0.0.1
             !=2.2.0:      2.1.0, 2.2.0-pre.3, 2.2.1 ^ 2.2.0
+        '''
+        self.str_match_test(t)
+
+    def test_satisfy(self):  # and unsatisfy
+        t = '''
+            2.2.0:        2.2.0, 2.2.0-2, 2.2.0+23 ^ 2.2.1-
+            !2.2.0:       2.2.1-                   ^ 2.2.0, 2.2.0-2, 2.2.0+23
+            2.2.0-as:     2.2.0-as                 ^ 2.2.0, 2.2.0-2+3
+            !2.2.0-as:    2.2.0, 2.2.0-2+3         ^ 2.2.0-as
         '''
         self.str_match_test(t)
 

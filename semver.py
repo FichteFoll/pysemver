@@ -329,6 +329,7 @@ class SemComparator(object):
         '=':  '__eq__',
         '!=': '__ne__'
     }
+    _ops_satisfy = ('~', '!')
 
     # Constructor
     def __init__(self, op, ver):
@@ -338,8 +339,9 @@ class SemComparator(object):
 
         Parameters:
             * op (str, False, None)
-                One of [>=, <=, >, <, =, !=, ~] or evaluates to `False` which defaults to '~'.
+                One of [>=, <=, >, <, =, !=, !, ~] or evaluates to `False` which defaults to '~'.
                 '~' means a "satisfy" operation where pre-releases and builds are ignored.
+                '!' is a negative "~".
             * ver (SemVer)
                 Holds the version to compare with.
 
@@ -351,15 +353,19 @@ class SemComparator(object):
         """
         super(SemComparator, self).__init__()
 
-        if op and op != '~' and op not in self._ops:
+        if op and op not in self._ops_satisfy and op not in self._ops:
             raise ValueError("Invalid value for `op` parameter.")
         if not isinstance(ver, SemVer):
             raise TypeError("`ver` parameter is not instance of SemVer.")
 
         # Default to '~' for versions with no build or pre-release
         op = op or '~'
-        if op == '~' and not len(ver) == 3:
-            op = '='
+        # Fallback to '=' and '!=' if len > 3
+        if len(ver) != 3:
+            if op == '~':
+                op = '='
+            if op == '!':
+                op = '!='
 
         self.op  = op
         self.ver = ver
@@ -385,9 +391,9 @@ class SemComparator(object):
                 `True` if the version matched the specified operator and internal version, `False`
                 otherwise.
         """
-        if self.op == '~':
-            # compare only the first three parts (which are tuples) and directly
-            return self.ver[:3] == ver[:3]
+        if self.op in self._ops_satisfy:
+            # Compare only the first three parts (which are tuples) and directly
+            return bool((self.ver[:3] == ver[:3]) + (self.op == '!') * -1)
         ret = getattr(ver, self._ops[self.op])(self.ver)
         if ret == NotImplemented:
             raise TypeError("Unable to compare %r with operator '%s'" % (ver, self.op))
@@ -501,18 +507,19 @@ class SemSel(object):
     When talking about "versions" it refers to a semantic version (SemVer). For information on how
     versions compare to one another, see SemVer's doc string.
 
-    Examples for **comparators**:
-        "1.0.0"         matches the version 1.0.0 and all its pre-release and build variants
-        "=1.0.0"        matches only the version 1.0.0
-        "!=1.0.0"       matches any version that is not exactly 1.0.0
-        ">1.0.0"        matches versions greater than 1.0.0
-        "<1.0.0"        matches versions smaller than 1.0.0
-        "1.0.0 - 1.0.3" matches versions greater than or equal 1.0.0 thru 1.0.3
-        "~1.0"          matches versions greater than or equal 1.0.0 thru 1.0.9999 (and more)
-        "1.0.x"         same as above
-        "~1.1.2"        matches versions greater than or equal 1.1.2 thru 1.1.9999 (and more)
-        "~1.1.2+any"    matches versions greater than or equal 1.1.2+any thru 1.1.9999 (and more)
-        "*", "~"        or "~x" match any version
+    List for **comparators**:
+        "1.0.0"            matches the version 1.0.0 and all its pre-release and build variants
+        "!1.0.0"           matches any version that is not 1.0.0 or any of its variants
+        "=1.0.0"           matches only the version 1.0.0
+        "!=1.0.0"          matches any version that is not 1.0.0
+        ">=1.0.0"          matches versions greater than or equal 1.0.0
+        "<1.0.0"           matches versions smaller than 1.0.0
+        "1.0.0 - 1.0.3"    matches versions greater than or equal 1.0.0 thru 1.0.3
+        "~1.0"             matches versions greater than or equal 1.0.0 thru 1.0.9999 (and more)
+        "~1", "1.x", "1.*" match versions greater than or equal 1.0.0 thru 1.9999.9999 (and more)
+        "~1.1.2"           matches versions greater than or equal 1.1.2 thru 1.1.9999 (and more)
+        "~1.1.2+any"       matches versions greater than or equal 1.1.2+any thru 1.1.9999 (and more)
+        "*", "~", "~x"     match any version
 
     Multiple comparators can be combined by using ' ' spaces and every comparator must match to make
     the **and chunk** match a version.
@@ -543,7 +550,7 @@ class SemSel(object):
          )?
         )
         (?P<other>.*)$''')
-    _split_op_regex = re.compile(r'^(?P<op>[<>!]?=|<|>)?(?P<ver>.*)$')
+    _split_op_regex = re.compile(r'^(?P<op>=|[<>!]=?)?(?P<ver>.*)$')
 
     # Constructor
     def __init__(self, sel):
