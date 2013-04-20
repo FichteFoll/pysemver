@@ -183,7 +183,7 @@ class CoercionTests(unittest.TestCase):
     def test_as_dict(self):
         self.assertEqual(SemVer("0.0.0-beta+alpha")._asdict(),
                          dict(major=0, minor=0, patch=0,
-                              prerelease='-beta', build='+alpha'))
+                              prerelease='beta', build='alpha'))
 
 
 class SelectorTests(unittest.TestCase):
@@ -378,11 +378,12 @@ class GetItemTests(unittest.TestCase):
         eq(s[0:2], (1, 2))
         eq(s[0:3], (1, 2, 3))
         eq(s[:3],  (1, 2, 3))
-        eq(s[0:4], (1, 2, 3, '-4.5'))
-        eq(s[0:5], (1, 2, 3, '-4.5', '+6'))
-        eq(s[3:5], ('-4.5', '+6'))
+        eq(s[0:4], (1, 2, 3, '4.5'))
+        eq(s[0:5], (1, 2, 3, '4.5', '6'))
+        eq(s[3:5], ('4.5', '6'))
 
-        eq(SemVer("1.2.3")[3:5], ('', ''))
+        eq(SemVer("1.2.3")[3:5], (None, None))
+        eq(SemVer("1.2.3-+")[3:5], ('', ''))
 
     def test_index(self):
         s = SemVer("1.2.3-4.5+6")
@@ -390,17 +391,19 @@ class GetItemTests(unittest.TestCase):
         self.equals(s[0], 1)
         self.equals(s[1], 2)
         self.equals(s[2], 3)
-        self.equals(s[3], '-4.5')
-        self.equals(s[-2], '-4.5')
-        self.equals(s[4], '+6')
+        self.equals(s[3], '4.5')
+        self.equals(s[-2], '4.5')
+        self.equals(s[4], '6')
         self.assertRaises(IndexError, lambda: s[6])
         self.assertRaises(IndexError, lambda: s[-6])
         self.assertRaises(TypeError, lambda: s['b'])
 
     def test_len(self):
         self.equals(len(SemVer("1.2.3-4.5+6")), 5)
-        self.equals(len(SemVer("1.2.3-4.5")), 4)
         self.equals(len(SemVer("1.2.3+6")), 5)
+        self.equals(len(SemVer("1.2.3+")), 5)
+        self.equals(len(SemVer("1.2.3-4.5")), 4)
+        self.equals(len(SemVer("1.2.3-")), 4)
         self.equals(len(SemVer("1.2.3")), 3)
 
     def test_attr(self):
@@ -409,8 +412,8 @@ class GetItemTests(unittest.TestCase):
         self.equals(s.major, 1)
         self.equals(s.minor, 2)
         self.equals(s.patch, 3)
-        self.equals(s.prerelease, '-4.5')
-        self.equals(s.build, '+6')
+        self.equals(s.prerelease, '4.5')
+        self.equals(s.build, '6')
         self.assertRaises(AttributeError, lambda: s.bb)
 
 if __name__ == '__main__':

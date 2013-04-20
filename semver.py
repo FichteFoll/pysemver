@@ -107,8 +107,8 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
         (?P<major>[0-9]+)
         \.(?P<minor>[0-9]+)
         \.(?P<patch>[0-9]+)
-        (?P<prerelease>\-(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)?
-        (?P<build>\+(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)?'''
+        (?:\-(?P<prerelease>(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?))?
+        (?:\+(?P<build>(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?))?'''
     _search_regex = re.compile(_base_regex)
     _match_regex  = re.compile('^%s$' % _base_regex)  # required because of $ anchor
 
@@ -138,13 +138,15 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
 
     # Magic methods
     def __str__(self):
-        return "{0}.{1}.{2}{3}{4}".format(*list(self))
+        return ('.'.join(map(str, self[:3]))
+                + ('-' + self.prerelease if self.prerelease is not None else '')
+                + ('+' + self.build if self.build is not None else ''))
 
     def __repr__(self):
-        return 'SemVer("%s")' % self
+        return 'SemVer("%s")' % str(self)
 
     def __len__(self):
-        return 3 + (bool(self.build) and 2 or bool(self.prerelease))
+        return 3 + (self.build is not None and 2 or self.prerelease is not None)
 
     # Magic rich comparing methods
     def __gt__(self, other):
@@ -239,7 +241,7 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
         if match is None:
             raise ValueError("'%s' is not a valid SemVer string" % ver)
 
-        g = list(match.groups(''))
+        g = list(match.groups())
         for i in range(3):
             g[i] = int(g[i])
 
@@ -247,25 +249,25 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
 
     def _compare(self, other):
         """Private. Do not touch.
+        self > other: 1
+        self = other: 0
+        self < other: -1
         """
         # Shorthand lambdas
         cp_len = lambda t, i=0: cmp(len(t[i]), len(t[not i]))
-        one_is_not = lambda a, b: (not a and b) or (not b and a)
 
-        i = 0
-        t1 = [tuple(self), tuple(other)]
-        for x1, x2 in zip(*t1):
+        for i, (x1, x2) in enumerate(zip(self, other)):
             if i > 2:
+                if x1 is None and x2 is None:
+                    continue
+
                 # self is greater when other has a prerelease but self doesn't
                 # self is less    when other has a build      but self doesn't
-                if one_is_not(x1, x2):
-                    return 2 * (i - 3.5) * (1 - 2 * bool(x2))
+                if x1 is None or x2 is None:
+                    return int(2 * (i - 3.5)) * (1 - 2 * (x1 is None))
 
-                # Remove leading '-' and '+'
-                x1, x2 = x1[1:], x2[1:]
-
-                # self is less when other's build is only '+'
-                if i == 4 and one_is_not(x1, x2):
+                # self is less when other's build is empty
+                if i == 4 and (not x1 or not x2) and x1 != x2:
                     return 1 - 2 * bool(x1)
 
                 # Split by '.' and use numeric comp or lexicographical order
@@ -288,7 +290,6 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
                     return 1
                 elif x1 < x2:
                     return -1
-            i += 1
 
         # The versions equal
         return 0
