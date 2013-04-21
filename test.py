@@ -94,36 +94,6 @@ class CompTests(unittest.TestCase):
         self.assertEqual(sorted(vers_rand), vers)
 
 
-class InvalidityTests(unittest.TestCase):
-    def invalid(self, ver):
-        self.assertFalse(SemVer.valid(ver))
-
-    def raises(self, err, *args):
-        self.assertRaises(err, SemVer, *args)
-
-    def test_invalid_num_terms(self):
-        self.invalid("0.0")
-        self.invalid("0.0.0.0+a40-alpha")
-
-    def test_invalid_chars(self):
-        self.invalid("0.0,0+a40-alpha")
-        self.invalid("0.0-0.0+a40-alpha")
-        self.invalid("0.0.~+a40-alpha")
-        self.invalid("0.0.~+a40-a&&pha")
-
-    def test_invalid_prefix(self):
-        self.invalid("v0.0.0")
-        self.invalid(" b 20.0.0")
-        self.invalid("=0.0.0")
-
-    def test_constructor_errors(self):
-        self.raises(ValueError, "0.0,0+a40-alpha")
-        self.raises(ValueError, "0.0.~+a40-alpha")
-        self.raises(ValueError, "  s 0.0.~+a40-alpha", True)
-        self.raises(TypeError, 123)
-        self.raises(TypeError, lambda x: x)
-
-
 class ValidityTests(unittest.TestCase):
     def valid(self, ver):
         self.assertTrue(SemVer.valid(ver))
@@ -142,9 +112,75 @@ class ValidityTests(unittest.TestCase):
     def test_prerelease_build(self):
         self.valid("0.0.0-beta.2+a30b")
 
-    def test_constructor(self):
-        self.assertTrue(SemVer("0.0.0-a40+alpha"))
-        self.assertTrue(SemVer(" 213s 0.0.0-a40+alpha", True))
+
+class InvalidityTests(unittest.TestCase):
+    def invalid(self, ver):
+        self.assertFalse(SemVer.valid(ver))
+
+    def test_invalid_num_terms(self):
+        self.invalid("0.0")
+        self.invalid("0.0.0.0+a40-alpha")
+
+    def test_invalid_chars(self):
+        self.invalid("0.0,0+a40-alpha")
+        self.invalid("0.0-0.0+a40-alpha")
+        self.invalid("0.0.~+a40-alpha")
+        self.invalid("0.0.~+a40-a&&pha")
+
+    def test_invalid_prefix(self):
+        self.invalid("v0.0.0")
+        self.invalid(" b 20.0.0")
+        self.invalid("=0.0.0")
+
+
+class ConstructorTests(unittest.TestCase):
+    def returns(self, ret, *args, **kwargs):
+        self.assertEqual(str(SemVer(*args, **kwargs)), ret)
+
+    def test_constructor_opt1(self):
+        self.returns("0.1.2-a40+alpha", "0.1.2-a40+alpha")
+        self.returns("0.1.2-a40+alpha", ver="0.1.2-a40+alpha")
+        self.returns("0.1.2-a40+alpha", ver="0.1.2-a40+alpha", clean=False)
+        self.returns("0.1.2-a40+alpha", clean=False, ver="0.1.2-a40+alpha")
+        self.returns("0.1.2-a40+alpha", " 213s 0.1.2-a40+alpha", True)
+        self.returns("0.1.2-a40+alpha", " 213s 0.1.2-a40+alpha", clean=True)
+
+    def test_constructor_opt2(self):
+        self.returns("0.1.2",    0, 1, 2)
+        self.returns("0.1.2",    0, 1, '2')
+        self.returns("0.1.2-",   0, 1, 2, '')
+        self.returns("0.1.2-3",  0, 1, 2, 3)
+        self.returns("0.1.2-+-", 0, 1, 2, '', '-')
+        self.returns("0.1.2-+-", 0, 1, 2, build='-', prerelease='')
+        self.returns("0.1.2-+-", 0, build='-', prerelease='', minor=1, patch=2)
+        self.returns("0.1.2+",   0, 1, 2, build='')
+        self.returns("0.1.2+",   *list(range(3)), build='')
+        self.returns("0.1.2",    major=0, minor=1, patch=2)
+        self.returns("0.1.2",    **dict(major=0, minor=1, patch=2))
+        self.returns("0.1.2+0.1.2.3.4", *('0.1.2'.split('.')), build='.'.join(map(str, range(5))))
+
+    def test_constructor_errors(self):
+        r = lambda r, *a, **kw: self.assertRaises(r, SemVer, *a, **kw)
+
+        r(ValueError, "0.1,2+a40-alpha")
+        r(ValueError, "0.1.~+a40-alpha")
+        r(ValueError, " 0.1.2-a40+alpha")
+        r(ValueError, " 0.1.~+a40-alpha", True)
+        r(TypeError, "0.1.2+a40-alpha", c=1)
+        r(TypeError, False, ver="0.1.2+a40-alpha")
+        r(TypeError, 123)
+        r(TypeError, list(range(3)))
+        r(TypeError, lambda x: x)
+        r(TypeError)
+
+        r(TypeError, 0, 1, 2, 3, 4, 5)
+        r(TypeError, 0, 1)
+        r(ValueError, 0, 1, 2, '+')
+        r(ValueError, 0, 1, 2, build='+')
+        r(ValueError, 'a', 1, 2)
+        r(ValueError, 0, 1, 'a')
+        r(TypeError, 0, 1, 2, ver='0.1.2')
+        r(TypeError, 0, 1, 2, v='0.1.2')
 
 
 class CleanTests(unittest.TestCase):
@@ -202,6 +238,7 @@ class SelectorTests(unittest.TestCase):
             except err:
                 self.assertRaises(err, SemSel, s)
             except Exception as e:
+                # `raise RuntimeError(...) from e` would be nice here but is Py3 only
                 r = RuntimeError('SemSel(%r) raised %r instead of %s' % (s, e, err))
             else:
                 r = RuntimeError('SemSel(%r) did not raise %s' % (s, err))
@@ -371,40 +408,41 @@ class GetItemTests(unittest.TestCase):
 
     def test_slice(self):
         s = SemVer("1.2.3-4.5+6")
-        eq = lambda w, t: self.equals(w, t)
+        eq = lambda w, t: self.assertEqual(w, t)
 
-        eq(type(s[:]), tuple)
+        self.assertTrue(isinstance(s[:], tuple))
         eq(s[0:1], (1,))
         eq(s[0:2], (1, 2))
         eq(s[0:3], (1, 2, 3))
-        eq(s[:3],  (1, 2, 3))
-        eq(s[0:4], (1, 2, 3, '4.5'))
-        eq(s[0:5], (1, 2, 3, '4.5', '6'))
+        eq(s[:4], (1, 2, 3, '4.5'))
+        eq(s[:5], (1, 2, 3, '4.5', '6'))
         eq(s[3:5], ('4.5', '6'))
 
         eq(SemVer("1.2.3")[3:5], (None, None))
-        eq(SemVer("1.2.3-+")[3:5], ('', ''))
+        eq(SemVer("1.2.3-+")[3:], ('', ''))
 
     def test_index(self):
         s = SemVer("1.2.3-4.5+6")
 
-        self.equals(s[0], 1)
-        self.equals(s[1], 2)
-        self.equals(s[2], 3)
-        self.equals(s[3], '4.5')
-        self.equals(s[-2], '4.5')
-        self.equals(s[4], '6')
+        self.assertEqual(s[0], 1)
+        self.assertEqual(s[1], 2)
+        self.assertEqual(s[2], 3)
+        self.assertEqual(s[3], '4.5')
+        self.assertEqual(s[-2], '4.5')
+        self.assertEqual(s[4], '6')
         self.assertRaises(IndexError, lambda: s[6])
         self.assertRaises(IndexError, lambda: s[-6])
         self.assertRaises(TypeError, lambda: s['b'])
 
     def test_len(self):
-        self.equals(len(SemVer("1.2.3-4.5+6")), 5)
-        self.equals(len(SemVer("1.2.3+6")), 5)
-        self.equals(len(SemVer("1.2.3+")), 5)
-        self.equals(len(SemVer("1.2.3-4.5")), 4)
-        self.equals(len(SemVer("1.2.3-")), 4)
-        self.equals(len(SemVer("1.2.3")), 3)
+        l = lambda s, r: self.assertEqual(len(SemVer(s)), r)
+
+        l("1.2.3-4.5+6", 5)
+        l("1.2.3+6", 5)
+        l("1.2.3+", 5)
+        l("1.2.3-4.5", 4)
+        l("1.2.3-", 4)
+        l("1.2.3", 3)
 
     def test_attr(self):
         s = SemVer("1.2.3-4.5+6")

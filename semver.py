@@ -113,28 +113,107 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
     _match_regex  = re.compile('^%s$' % _base_regex)  # required because of $ anchor
 
     # "Constructor"
-    def __new__(cls, ver, clean=False):
-        """Constructor examples:
-        SemVer("1.0.1")
-        SemVer("this version 1.0.1-pre.1 here", True)
-        SemVer("0.0.9-pre-alpha+34")
+    def __new__(cls, *args, **kwargs):
+        """There are two different constructor styles that are allowed:
+        - Option 1 allows specification of a semantic version as a string and the option to "clean"
+          the string before parsing it.
+        - Option 2 allows specification of each component separately as one parameter.
 
-        Parameters:
-            * ver (str)
-                The string containing the version.
-            * clean = `False` (bool; optional)
-                If this is `True`, `SemVer.clean(ver)` is called before parsing.
+        Note that all the parameters specified in the following sections can be passed either as
+        positional or as named parameters while considering the usual Python rules for this. As
+        such, `SemVer(1, 2, minor=1)` will result in an exception and not in `SemVer("1.1.2")`.
+
+        Option 1:
+            Constructor examples:
+                SemVer("1.0.1")
+                SemVer("this version 1.0.1-pre.1 here", True)
+                SemVer(ver="0.0.9-pre-alpha+34", clean=False)
+
+            Parameters:
+                * ver (str)
+                    The string containing the version.
+                * clean = `False` (bool; optional)
+                    If this is true in boolean context, `SemVer.clean(ver)` is called before
+                    parsing.
+
+        Option 2:
+            Constructor examples:
+                SemVer(1, 0, 1)
+                SemVer(1, '0', prerelease='pre-alpha', patch=1, build=34)
+                SemVer(**dict(minor=2, major=1, patch=3))
+
+            Parameters:
+                * major (int, str, float ...)
+                * minor (...)
+                * patch (...)
+                    Major to patch components must be an integer or convertable to an int (e.g. a
+                    string or another number type).
+
+                * prerelease = `None` (str, int, float ...; optional)
+                * build = `None` (...; optional)
+                    Pre-release and build components should be a string (or number) type.
+                    Will be passed to `str()` if not already a string but the final string must
+                    match '^[0-9A-Za-z.-]*$'
 
         Raises:
             * TypeError
-                Invalid parameter type.
+                Invalid parameter type(s) or combination (e.g. option 1 and 2).
             * ValueError
-                Invalid semantic version.
+                Invalid semantic version or option 2 parameters unconvertable.
         """
-        if clean:
-            ver = cls.clean(ver) or ver
+        ver, clean, comps = None, False, None
+        kw, l = kwargs.copy(), len(args) + len(kwargs)
 
-        return super(SemVer, cls).__new__(cls, *cls._parse(ver))
+        def inv():
+            raise TypeError("Invalid parameter combination: args=%s; kwargs=%s" % (args, kwargs))
+
+        # Do validation and parse the parameters
+        if l == 0 or l > 5:
+            raise TypeError("SemVer accepts at least 1 and at most 5 arguments (%d given)" % l)
+
+        elif l < 3:
+            if len(args) == 2:
+                ver, clean = args
+            else:
+                ver = args[0] if args else kw.pop('ver', None)
+                clean = kw.pop('clean', clean)
+                if kw:
+                    inv()
+
+        else:
+            comps = list(args) + [kw.pop(cls._fields[k], None) for k in range(len(args), 5)]
+            if kw or any(comps[i] is None for i in range(3)):
+                inv()
+
+            typecheck = (int,) * 3 + (basestring,) * 2
+            for i, (v, t) in enumerate(zip(comps, typecheck)):
+                if v is None:
+                    continue
+                elif not isinstance(v, t):
+                    try:
+                        if i < 3:
+                            v = typecheck[i](v)
+                        else:  # The real `basestring` can not be instatiated (Py2)
+                            v = str(v)
+                    except ValueError as e:
+                        # Modify the exception message. I can't believe this actually works
+                        e.args = ("Parameter #%d must be of type %s or convertable"
+                                  % (i, t.__name__),)
+                        raise
+                    else:
+                        comps[i] = v
+                if t is basestring and not re.match(r"^[0-9A-Za-z.-]*$", v):
+                    raise ValueError("Build and pre-release strings must match '^[0-9A-Za-z.-]*$'")
+
+        # Final adjustments
+        if not comps:
+            if ver is None or clean is None:
+                inv()
+            ver = clean and cls.clean(ver) or ver
+            comps = cls._parse(ver)
+
+        # Create the obj
+        return super(SemVer, cls).__new__(cls, *comps)
 
     # Magic methods
     def __str__(self):
@@ -143,7 +222,9 @@ class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
                 + ('+' + self.build if self.build is not None else ''))
 
     def __repr__(self):
+        # Use the shortest representation - what would you prefer?
         return 'SemVer("%s")' % str(self)
+        # return 'SemVer(%s)' % ', '.join('%s=%r' % (k, getattr(self, k)) for k in self._fields)
 
     def __len__(self):
         return 3 + (self.build is not None and 2 or self.prerelease is not None)
