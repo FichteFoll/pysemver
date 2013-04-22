@@ -78,12 +78,15 @@ class CompTests(unittest.TestCase):
                     self.comp(v, '==', v2)
                     self.comp(v, '<=', v2)
                     self.comp(v, '>=', v2)
+                    self.assertEqual(hash(v), hash(v2))
+                else:
+                    self.comp(v, '!=', v2)
+                    self.assertNotEqual(hash(v), hash(v2))
                 if i < j:
                     self.comp(v, '<',  v2)
-                    self.comp(v, '!=', v2)
+
                 if i > j:
                     self.comp(v, '>', v2)
-                    self.comp(v, '!=', v2)
 
     def test_simple_sort(self):
         vers = [SemVer(v) for v in self.versions]
