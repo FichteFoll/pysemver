@@ -5,11 +5,28 @@ possibility to match a selector string against versions. Interesting for version
 Versions look like: "1.7.12+b.133"
 Selectors look like: ">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113"
 
+Example usages:
+    >>> SemVer(1, 2, 3, build=13)
+    SemVer("1.2.3+13")
+    >>> SemVer.valid("1.2.3.4")
+    False
+    >>> SemVer.clean("this is unimportant text 1.2.3-2 and will be stripped")
+    "1.2.3-2"
+    >>> SemVer("1.7.12+b.133").satisfies(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113")
+    True
+    >>> SemSel(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113").matches(SemVer("1.7.12+b.133"),
+    ... SemVer("1.6.9+b.112"), SemVer("1.6.10"))
+    [SemVer("1.7.12+b.133"), SemVer("1.6.9+b.112")]
+    >>> min(_)
+    SemVer("1.6.9+b.112")
+    >>> _.patch
+    9
+
 Exported classes:
-    * SemVer(object)
-        Defines methods for semantic versions.
-    * SemSel(object)
-        Defines methods for semantic version selectors.
+    * SemVer(collections.namedtuple())
+        Parses semantic versions and defines methods for them. Supports rich comparisons.
+    * SemSel(tuple)
+        Parses semantic version selector strings and defines methods for them.
     * SelParseError(Exception)
         An error among others raised when parsing a semantic version selector failed.
 
@@ -43,7 +60,7 @@ import sys
 from collections import namedtuple  # Python >=2.6
 
 
-__all__ = ['SemVer', 'SemSel', 'SelParseError']
+__all__ = ('SemVer', 'SemSel', 'SelParseError')
 
 
 if sys.version_info[0] == 3:
@@ -52,7 +69,7 @@ if sys.version_info[0] == 3:
 
 
 # @functools.total_ordering would be nice here but was added in 2.7, __cmp__ is not Py3
-class SemVer(namedtuple("SemVer", 'major, minor, patch, prerelease, build')):
+class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
     """Semantic Version, consists of 3 to 5 components defining the version's adicity.
 
     See http://semver.org/ (2.0.0-rc.1) for the standard mainly used for this implementation, few

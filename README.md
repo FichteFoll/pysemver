@@ -5,7 +5,7 @@ pysemver - Semantic Versioning for Python
 
 Usage
 =====
-Work in progress.
+Work in progress. See the [source code](semver.py)'s doc strings for detailed descriptions.
 
 ```python
 """pysemver: Semantic Version comparing for Python.
@@ -15,25 +15,37 @@ possibility to match a selector string against versions. Interesting for version
 Versions look like: "1.7.12+b.133"
 Selectors look like: ">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113"
 
-Example usage:
+Example usages:
+    >>> SemVer(1, 2, 3, build=13)
+    SemVer("1.2.3+13")
     >>> SemVer.valid("1.2.3.4")
     False
     >>> SemVer.clean("this is unimportant text 1.2.3-2 and will be stripped")
     "1.2.3-2"
     >>> SemVer("1.7.12+b.133").satisfies(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113")
     True
-    >>> SemSel(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113").matches(SemVer("1.7.12+b.133"))
-    ["1.7.12+b.133"]
+    >>> SemSel(">1.7.0 || 1.6.9+b.111 - 1.6.9+b.113").matches(SemVer("1.7.12+b.133"),
+    ... SemVer("1.6.9+b.112"), SemVer("1.6.10"))
+    [SemVer("1.7.12+b.133"), SemVer("1.6.9+b.112")]
+    >>> min(_)
+    SemVer("1.6.9+b.112")
+    >>> _.patch
+    9
 
 Exported classes:
-    * SemVer(object)
-        Defines methods for semantic versions.
-    * SemSel(object)
-        Defines methods for semantic version selectors.
+    * SemVer(collections.namedtuple())
+        Parses semantic versions and defines methods for them. Supports rich comparisons.
+    * SemSel(tuple)
+        Parses semantic version selector strings and defines methods for them.
     * SelParseError(Exception)
         An error among others raised when parsing a semantic version selector failed.
 
-Functions:
+Other classes:
+    * SemComparator(object)
+    * SemSelAndChunk(list)
+    * SemSelOrChunk(list)
+
+Functions/Variables/Constants:
     none
 """
 ```
