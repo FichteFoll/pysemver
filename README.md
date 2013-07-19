@@ -26,97 +26,62 @@ SemVer.clean("this is unimportant text 1.2.3-2 and will be stripped")
 # Returns "1.2.3-2"
 ```
 
-Alternatively, setting the second parameter to true with trigger this action before
-instantiating the object. `SemVer('Extra text 1.2.3', True)`
+Alternatively, setting the second parameter to true will trigger this action
+before instantiating the object. `SemVer('Extra text 1.2.3', True)`
+
 
 Selectors
 ---------
 
+PySemVer utualizes selectors as specified in the SemVer spec.
+
+* `||` is a logical **OR**
+* **SPACE** is a logical **AND**
+* ` - ` specifies a range
+* Comparison Operators perform as expected
+	* `< <= => > !=`
+* Examples of valid selectors
+	* `>1.7.0`
+	* `>3.0.0 <8.0.0` = `3.0.0 - 8.0.0`
+	* `<5.0.0 || >8.0.0`
 
 
-The most basic form of selector string is something like `>1.7.0` which will match
-version greater than `1.7.0`, this comparison can be done using either of the
-following syntaxes.
+Comparison Functions
+--------------------
 
-```python
-SemVer('1.8.0').satisfies('>1.7.0')
-# Which is equivalent to
-bool(SemSel('>1.7.0').matches('1.8.0'))
-```
+PySemVer supplies two methods for using the selectors
 
-`SemSel.matches()` takes a string, SemVer object, or a mixed list, and then returns a
-list of matching versions. If a boolean value is required, it can easily be cast
-using the `bool()` method.
-
-Taking this a step further you can define ranges for testing. Say we wanted to
-check if a version is greater than `3.0.0` but less than `8.0.0`. This can be done
-in two ways, either joining `>3.0.0` and `<8.0.0` with a space (`>3.0.0 <8.0.0`)
-or it can be written as a range (`3.0.0 - 8.0.0`). This test can be written as
-follows.
-
-```python
-SemSel('>3.0.0 <8.0.0').matches('6.0.0')
-# Which is equivalent to
-SemSel('3.0.0 - 8.0.0').matches('6.0.0')
-```
-
-It is also possible to define multiple acceptable patterns for the version. These
-patterns are joined using ` || ` as a logical `OR` operator. So if any of the
-joined ranges are satisfied, it returns true. For example, if all versions less
-than `5.0.0` are acceptable, and versions greater than `8.0.0` are also
-acceptable, but the versions in between are not the selector can be written as
-follows.
-
-```python
-SemSel('<5.0.0 || >8.0.0').matches('9.0.0')
-```
-
-### Fuzzy version selection
-
-In addition to the standard comparison operators `< <= = => > !=` it is also
-possible to use fuzzy version selection like `~1.0.0` or `1.3.x`. This is useful
-for specifying a specific major or minor versions and accepting smaller changes.
-For instance `1.2.x` would evaluate to `1.2.0 - 1.2.999999` while `1.x` would
-be equal to `1.0.0 - 1.999.999`. The behavior of `~` is similar. `~1.1.2`
-evaluates to `1.1.2 - 1.1.999`. 
-
-Please note `999` is just used as a convenient representation for a 'big' number.
-These selectors will match up to any value.
+* `SemVer.satisfies()`
+	* Returns a boolean value
+	* Usage `SemVer('1.0.0').satisfies('>0.6.0')`
+* `SemSel.matches()`
+	* Returns a list of matching versions
+	* Usage `SemSel('>1.7.0').matches('1.9.0')` returns `1.9.0` or
+	* `SemSel('>1.7.0').matches('1.6.0', '1.9.0', '2.0.0')` returns `['1.9.0', '2.0.0']`
 
 
+Fuzzy Version Selectors
+-----------------------
 
-TODO: Advanced Advanced `~` operator and `x-ranges`
+In addition to the previous selectors, PySemVer also supports
+fuzzy selectors and x-ranges.
+
+* `~` can be used like `~1` or `~1.0`, matching `1.0.0 - 1.9999.9999` and `1.0.0 - 1.0.9999` respectively 
+* `x` can be used as a wild card character like `1.0.x` which matches `1.0.0 - 1.0.9999`
 
 
 Classes
 -------
 
-* SemVer(object)
+* SemVer
 	* Defines methods for semantic versions.
-	* Immutable and hashable
-	* Public methods
-		* satisfies(str)
-			* returns bool
-		* clean(str)
-			* returns str
-		* valid(str)
-			* returns bool
 	* Implements rich comparison
-* SemSel(object)
+	* Immutable and hashable
+* SemSel
 	* Defines methods for semantic version selectors.
 	* Immutable and hashable
-	* Public methods
-		* matches(str)
-			* returns list of strings
-* SelParseError(Exception)
-	* An error among others raised when parsing a semantic version selector failed.
-
-
-Known Issues
-------------
-
-* `1.0.0` does not match `1.0.0-beta` or any other pre-release version.
-
+* SelParseError
+	* Defines error throw for failed parsing of selector
 
 Contributing
 ------------
@@ -126,6 +91,7 @@ you run in to, and any ideas about how to make it better. We also are glad to
 look at pull requests, but be sure to add unittests for new or changed behavior
 and that your code passes. Please review the `.travis.yml` file for Python
 version and testing environment information.
+
 
 License (MIT)
 -------------
