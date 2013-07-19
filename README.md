@@ -3,13 +3,8 @@ pysemver - Semantic Versioning for Python
 
 [![Build Status](https://travis-ci.org/FichteFoll/pysemver.png?branch=master)](https://travis-ci.org/FichteFoll/pysemver)
 
-The purpose of this python library is to provide a robust implementation of the
-Semantic Versioning methodology. Please review the [Semantic Versioning](http://semver.org)
-project page for the details of the spec.
-
-
-Basic Usage
------------
+The purpose of this python library is to provide a fully compliant implementation
+of the Semantic Versioning methodology. Please review the [Semantic Versioning](http://semver.org) project page for the details of the spec.
 
 The most basic usage of this module is version comparison as follows.
 
@@ -29,22 +24,15 @@ method.
 ```python
 SemVer.clean("this is unimportant text 1.2.3-2 and will be stripped")
 # Returns "1.2.3-2"
-````
+```
 
-Also, if you are working with dirty strings, you can instantiate the class using
-the `SemVer('Extra text 1.2.3', True)` function call. This runs the passed
-string through the `SemVer.clean()` method before parsing it.
+Alternatively, setting the second parameter to true with trigger this action before
+instantiating the object. `SemVer('Extra text 1.2.3', True)`
 
-Advanced Usage
---------------
+Selectors
+---------
 
-The previous section introduces the basic usage of the module. For more complex
-version checking, such as inside a package manager, the module also provides the
-`SemSel` class and the `SemVer.satisfies()` method for sets of conditions.
-Internally, `SemVer.satisfies()` calls `SemSel.matches()` so the results are
-identical.
 
-### Selectors
 
 The most basic form of selector string is something like `>1.7.0` which will match
 version greater than `1.7.0`, this comparison can be done using either of the
