@@ -135,6 +135,15 @@ class InvalidityTests(unittest.TestCase):
         self.invalid(" b 20.0.0")
         self.invalid("=0.0.0")
 
+    def test_invalid_leading_zeros(self):
+        self.invalid("01.1.1")
+        self.invalid("1.01.1")
+        self.invalid("1.1.01")
+        self.invalid("1.1.1-0alpha")
+        self.invalid("1.1.1-alpha.1.01")
+        self.invalid("1.1.1-alpha+01")
+        self.invalid("1.1.1-alpha+1.01")
+
 
 class ConstructorTests(unittest.TestCase):
     def returns(self, ret, *args, **kwargs):
