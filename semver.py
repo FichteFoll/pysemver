@@ -121,11 +121,11 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
 
     # Static class variables
     _base_regex = r'''(?x)
-        (?P<major>[0-9]+)
-        \.(?P<minor>[0-9]+)
-        \.(?P<patch>[0-9]+)
-        (?:\-(?P<prerelease>(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?))?
-        (?:\+(?P<build>(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?))?'''
+        (?P<major>[1-9][0-9]*)
+        \.(?P<minor>[1-9][0-9]*)
+        \.(?P<patch>[1-9][0-9]*)
+        (?:\-(?P<prerelease>(?:[1-9A-Za-z-][0-9A-Za-z-]*(?:\.[1-9A-Za-z-][0-9A-Za-z-]*)*)?))?
+        (?:\+(?P<build>(?:[1-9A-Za-z-][0-9A-Za-z-]*(?:\.[1-9A-Za-z-][0-9A-Za-z-]*)*)?))?'''
     _search_regex = re.compile(_base_regex)
     _match_regex  = re.compile('^%s$' % _base_regex)  # required because of $ anchor
 
@@ -622,18 +622,18 @@ class SemSel(tuple):
     # Private properties
     _fuzzy_regex = re.compile(r'''(?x)^
         (?P<op>[<>]=?|~>?=?)?
-        (?:(?P<major>\d+)
-         (?:\.(?P<minor>\d+)
-          (?:\.(?P<patch>\d+)
+        (?:(?P<major>[1-9]\d*)
+         (?:\.(?P<minor>[1-9]\d*)
+          (?:\.(?P<patch>[1-9]\d*)
            (?P<other>[-+][a-zA-Z0-9-+.]*)?
           )?
          )?
         )?$''')
     _xrange_regex = re.compile(r'''(?x)^
         (?P<op>[<>]=?|~>?=?)?
-        (?:(?P<major>\d+|[xX*])
-         (?:\.(?P<minor>\d+|[xX*])
-          (?:\.(?P<patch>\d+|[xX*]))?
+        (?:(?P<major>[1-9]\d*|[xX*])
+         (?:\.(?P<minor>[1-9]\d*|[xX*])
+          (?:\.(?P<patch>[1-9]\d*|[xX*]))?
          )?
         )
         (?P<other>.*)$''')
