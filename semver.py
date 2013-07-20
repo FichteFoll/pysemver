@@ -115,17 +115,28 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
     'empty' build component is considered to be the highest version for this
     major-minor-patch-prerelease combination (e.g. "1.2.3+").
 
+    Numeric sequences may NOT start with a leading zero.
+
 
     [1]: Regexp for a sequence: r'[0-9A-Za-z-]+'.
     """
 
     # Static class variables
     _base_regex = r'''(?x)
-        (?P<major>(?:0|[1-9][0-9]*))
-        \.(?P<minor>(?:0|[1-9][0-9]*))
-        \.(?P<patch>(?:0|[1-9][0-9]*))
-        (?:\-(?P<prerelease>(?:(?:0|[1-9A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9A-Za-z-][0-9A-Za-z-]*))*)?))?
-        (?:\+(?P<build>(?:(?:0|[1-9A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9A-Za-z-][0-9A-Za-z-]*))*)?))?'''
+        (?P<major>0|[1-9][0-9]*)
+        \.(?P<minor>0|[1-9][0-9]*)
+        \.(?P<patch>0|[1-9][0-9]*)
+        (?:-
+            (?P<prerelease>
+                (?:   (?!0\d+(?:$|\+|\s)) [0-9A-Za-z-]+ # Do not allow only numerics with leading 0s
+                 (?:\.(?!0\d+(?:$|\+|\s)) [0-9A-Za-z-]+)*)? # (spaces for when using "clean")
+             ))?
+        (?:\+
+            (?P<build>
+                (?:   (?!0\d+(?:$|\s)) [0-9A-Za-z-]+
+                 (?:\.(?!0\d+(?:$|\s)) [0-9A-Za-z-]+)*)?
+             ))?
+    '''
     _search_regex = re.compile(_base_regex)
     _match_regex  = re.compile('^%s$' % _base_regex)  # required because of $ anchor
 
@@ -160,7 +171,7 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
                 SemVer(**dict(minor=2, major=1, patch=3))
 
             Parameters:
-                * major (int, str, float ...)
+                * major (int, str)
                 * minor (...)
                 * patch (...)
                     Major to patch components must be an integer or convertable to an int (e.g. a
@@ -170,7 +181,8 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
                 * build = `None` (...; optional)
                     Pre-release and build components should be a string (or number) type.
                     Will be passed to `str()` if not already a string but the final string must
-                    match '^[0-9A-Za-z.-]*$'
+                    match '^[0-9A-Za-z.-]*$'. Since a numeric sequence (separated by `.`) may not
+                    start with a leading zero, floats like `1.02` will fail.
 
         Raises:
             * TypeError
@@ -207,6 +219,7 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
                 if v is None:
                     continue
                 elif not isinstance(v, t):
+                    # Type conversion
                     try:
                         if i < 3:
                             v = typecheck[i](v)
@@ -219,14 +232,21 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
                         raise
                     else:
                         comps[i] = v
-                if t is basestring and not re.match(r"^[0-9A-Za-z.-]*$", v):
-                    raise ValueError("Build and pre-release strings must match '^[0-9A-Za-z.-]*$'")
+                if t is basestring:
+                    if not re.match(r"^[0-9A-Za-z.-]*$", v):
+                        raise ValueError("Build and pre-release strings must match "
+                                         "'^[0-9A-Za-z.-]*$'")
+                    # Check for leading zeros
+                    for sub in v.split("."):
+                        if re.match(r"^0[0-9]+$", sub):
+                            raise ValueError("Numeric sequences may not start with a leading zero")
 
         # Final adjustments
         if not comps:
             if ver is None or clean is None:
                 inv()
             ver = clean and cls.clean(ver) or ver
+            # Parse semver string
             comps = cls._parse(ver)
 
         # Create the obj
@@ -351,7 +371,7 @@ class SemVer(namedtuple("_SemVer", 'major, minor, patch, prerelease, build')):
         self = other: 0
         self < other: -1
         """
-        # Shorthand lambdas
+        # Shorthand lambda
         cp_len = lambda t, i=0: cmp(len(t[i]), len(t[not i]))
 
         for i, (x1, x2) in enumerate(zip(self, other)):

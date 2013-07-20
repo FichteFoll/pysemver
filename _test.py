@@ -82,6 +82,7 @@ class CompTests(unittest.TestCase):
                 else:
                     self.comp(v, '!=', v2)
                     self.assertNotEqual(hash(v), hash(v2))
+
                 if i < j:
                     self.comp(v, '<',  v2)
 
@@ -114,6 +115,7 @@ class ValidityTests(unittest.TestCase):
 
     def test_prerelease_build(self):
         self.valid("0.0.0-beta.2+a30b")
+        self.valid("1.1.1-0a+0n")
 
 
 class InvalidityTests(unittest.TestCase):
@@ -128,7 +130,7 @@ class InvalidityTests(unittest.TestCase):
         self.invalid("0.0,0+a40-alpha")
         self.invalid("0.0-0.0+a40-alpha")
         self.invalid("0.0.~+a40-alpha")
-        self.invalid("0.0.~+a40-a&&pha")
+        self.invalid("0.0.0+a40-a&pha")
 
     def test_invalid_prefix(self):
         self.invalid("v0.0.0")
@@ -139,7 +141,6 @@ class InvalidityTests(unittest.TestCase):
         self.invalid("01.1.1")
         self.invalid("1.01.1")
         self.invalid("1.1.01")
-        self.invalid("1.1.1-0alpha")
         self.invalid("1.1.1-alpha.1.01")
         self.invalid("1.1.1-alpha+01")
         self.invalid("1.1.1-alpha+1.01")
@@ -192,7 +193,9 @@ class ConstructorTests(unittest.TestCase):
         r(ValueError, 'a', 1, 2)
         r(ValueError, 0, 1, 'a')
         r(TypeError, 0, 1, 2, ver='0.1.2')
+        r(TypeError, v='0.1.2')
         r(TypeError, 0, 1, 2, v='0.1.2')
+        r(ValueError, 0, 1, 2, prerelease='012')
 
 
 class CleanTests(unittest.TestCase):
